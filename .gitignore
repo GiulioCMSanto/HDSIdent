@@ -1,2 +1,6 @@
 .vscode/*
 env/*
+.ipynb
+data/*
+jupyter/*
+.DS_Store
