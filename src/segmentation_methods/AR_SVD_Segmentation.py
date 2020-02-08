@@ -390,19 +390,25 @@ class ARSVDSegmentation(object):
         """
         if type(X) == pd.core.frame.DataFrame:
             X_cols = X.columns
-            X = X.values.reshape(-1,1)
+            X = X.values
+            if X.ndim == 1:
+                X = X.reshape(-1,1)
         elif type(X) == np.ndarray:
-            X = X.reshape(-1,1)
             X_cols = None
+            if X.ndim == 1:
+                X = X.reshape(-1,1)
         else:
             raise Exception("Input data must be a pandas dataframe or a numpy array") 
 
         if type(y) == pd.core.frame.DataFrame:
             y_cols = y.columns
-            y = y.values.reshape(-1,1)
+            y = y.values
+            if y.ndim == 1:
+                y = y.reshape(-1,1)
         elif type(y) == np.ndarray:
-            y = y.reshape(-1,1)
             y_cols = None
+            if y.ndim == 1:
+                y = y.reshape(-1,1)
         else:
             raise Exception("Input data must be a pandas dataframe or a numpy array") 
             
