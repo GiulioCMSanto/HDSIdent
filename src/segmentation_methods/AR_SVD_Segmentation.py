@@ -1,11 +1,12 @@
 from joblib import Parallel, delayed
 from collections import defaultdict
 from scipy.stats import norm
+from scipy import linalg
 import pandas as pd
 import numpy as np
 import scipy
 
-class AR_SVD_segmentation(object):
+class ARSVDSegmentation(object):
     """
     This class receives intervals of data and verifies if these intervals
     are suitable for performing System Identification. The Autoregressive (AR)
@@ -335,12 +336,12 @@ class AR_SVD_segmentation(object):
             input_idx: the sequential number of the execution input
             output_idx: the sequential number of the execution output
         """
-        if ((teste._miso_ranks['segment'+'_'+str(segment)] \
-                              ['output'+'_'+str(output_idx)] >= self.efr_thr)
+        if ((self._miso_ranks['segment'+'_'+str(segment)] \
+                             ['output'+'_'+str(output_idx)] >= self.efr_thr)
             and \
-            (teste._miso_correlations['segment'+'_'+str(segment)] \
-                                     ['output'+'_'+str(output_idx)] \
-                                     ['input'+'_'+str(input_idx)] >= self.cc_thr)):
+            (self._miso_correlations['segment'+'_'+str(segment)] \
+                                    ['output'+'_'+str(output_idx)] \
+                                    ['input'+'_'+str(input_idx)] >= self.cc_thr)):
                 
             self._segments_indexes['segment'+'_'+str(segment)] = self.initial_intervals[segment]
     
