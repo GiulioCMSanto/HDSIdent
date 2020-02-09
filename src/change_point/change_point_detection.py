@@ -312,7 +312,7 @@ class moving_average():
                     plt.axvline(x=idx, linestyle='--', color=color_arr[color_rule])
             plt.show()
 
-class bandpass_filter():
+class BandpassFilter():
     """
     Performs signal segmentation using a discrete-time Butterworth
     bandpass filter from SciPy. Notice that the input frequencies are
