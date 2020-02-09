@@ -362,7 +362,6 @@ class ARSVDSegmentation(object):
                     output_idx_name = y_cols[output_idx]
                 else:
                     output_idx_name = 'output'+'_'+str(output_idx)
-                    
                 self._segments[segment][output_idx_name] = y[:,output_idx][self._segments_indexes[segment]]
                 
             for input_idx in range(0,X.shape[1]):
@@ -438,6 +437,8 @@ class ARSVDSegmentation(object):
         
         #Verify data format
         X, y, X_cols, y_cols = self._verify_data(X,y)
+        print(X.shape)
+        print(y.shape)
         
         #Make an Parallel executor
         executor = Parallel(require='sharedmem',
