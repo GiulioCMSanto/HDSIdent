@@ -451,14 +451,14 @@ class ARSVDSegmentation(object):
         
         #Compute cross-correlation scalar metric for each MISO system
         miso_corr_task = (delayed(self._compute_miso_correlations)(X,y,input_idx,output_idx,segment)
-                          for segment in range(0,len(self.initial_intervals))
+                          for segment in self.initial_intervals.keys()
                           for output_idx in range(0,y.shape[1])
                           for input_idx in range(0,X.shape[1]))
         executor(miso_corr_task)
         
         #Compare Effective Ranks and cross-correlation metrics with thresholds
         segmentation_task = (delayed(self._compute_segment_indexes)(segment,input_idx,output_idx)
-                             for segment in range(0,len(self.initial_intervals))
+                             for segment in self.initial_intervals.keys()
                              for output_idx in range(0,y.shape[1])
                              for input_idx in range(0,X.shape[1]))
         executor(segmentation_task)
