@@ -800,13 +800,13 @@ class non_parametric_pettitt():
                 
             plt.show()
     
-class exponential_moving_average_and_variance():
+class ExponentialWeighted(object):
     """
     Exponential Moving Average Control Chart. Performs a
     recursive moving average filter and detects
     change points and its corresponding intervals.
     """
-    def __init__(self, X, forgetting_fact_v, forgetting_fact_u, sigma = None, H_u=None, H_v = None, normalize=True):
+    def __init__(self, X, forgetting_fact_v, forgetting_fact_u, sigma = None, H_u=None, H_v = None,n_jobs=-1,verbose=0):
         """ 
         Constructor.
         
@@ -818,10 +818,14 @@ class exponential_moving_average_and_variance():
             H_u: change-point threshold for the mean
             H_v: change-point threshold for the variance
             normalize: whether or not to normalized the data (StandardScaler)
+            verbose: verbose level as in joblib library
+            n_jobs: the number of threads as in joblib library
         """
         self.forgetting_fact_v = forgetting_fact_v
         self.forgetting_fact_u = forgetting_fact_u
         self.df_cols = None
+        self.n_jobs = n_jobs
+        self.verbose = verbose
 
         if type(X) == pd.core.frame.DataFrame:
             self.X = X.values
@@ -830,10 +834,6 @@ class exponential_moving_average_and_variance():
             self.X = X
         else:
             raise Exception("Input data must be a pandas dataframe or a numpy array") 
-        
-        if normalize:
-            scaler = StandardScaler()
-            self.X = scaler.fit_transform(self.X)
             
         if not sigma:
             self.sigma = np.std(X,axis=0)
@@ -850,18 +850,18 @@ class exponential_moving_average_and_variance():
         else:
             self.H_v = H_v
         
+        #Internal Variables
+        self.unified_intervals = defaultdict(list)
+        self.intervals = defaultdict(list)
         self._mu_k_arr = None
         self._v_k_arr = None
-        self.intervals = defaultdict(list)
-        
-        #Internal Variables
         self._mu_k = np.array([])
         self._v_k = np.array([])
         self._mu_k_1 = 0
         self._v_k_1 = 0
-        self._is_interval = [False]*X.shape[1]
-        self._init_idx = [0]*X.shape[1]
-        self._final_idx = [0]*X.shape[1]
+        self._is_interval = [False]*self.X.shape[1]
+        self._init_idx = [0]*self.X.shape[1]
+        self._final_idx = [0]*self.X.shape[1]
         self._criteria = None
         
     def _exponential_moving_average_and_variance(self, X, idx):
@@ -887,12 +887,13 @@ class exponential_moving_average_and_variance():
         
         return (self._mu_k, self._v_k)
     
-    def _search_for_change_points(self, idx, criteria):
+    def _search_for_change_points(self, idx, col, criteria):
         """
         Searchs for change points in the filtered data.
         
         Arguments:
             idx: the filtered data sample index
+            col: the data column (execution signal)
             criteria: the filter to be considered when looking for
                       a change-point (average, variance or both)
         
@@ -900,48 +901,43 @@ class exponential_moving_average_and_variance():
             self._intervals: a list with the initial and final
                              indexes of an interval (if found).
         """
-        for col in range(self.X.shape[1]):
             
-            #Change-point conditions
-            if criteria == 'average':
-                condition = abs(self._mu_k_arr[idx,col]) >= self.H_u[col]
-            elif criteria == 'variance':
-                condition = abs(self._v_k_arr[idx,col]) >= self.H_v[col]
-            else:
-                condition = (abs(self._mu_k_arr[idx,col]) >= self.H_u[col]) and \
-                            (abs(self._v_k_arr[idx,col]) >= self.H_v[col])
-                
-            if condition:
-                if not self._is_interval[col]:
-                    self._init_idx[col] = idx
-                    self._is_interval[col] = True
-                elif idx == len(self.X)-1 and self._is_interval[col]:
-                    self._is_interval[col] = False
-                    self._final_idx[col] = idx
-                    self.intervals[col].append([self._init_idx[col], self._final_idx[col]])    
-            elif self._is_interval[col]:
+        #Change-point conditions
+        if criteria == 'average':
+            condition = abs(self._mu_k_arr[idx,col]) >= self.H_u[col]
+        elif criteria == 'variance':
+            condition = abs(self._v_k_arr[idx,col]) >= self.H_v[col]
+        else:
+            condition = (abs(self._mu_k_arr[idx,col]) >= self.H_u[col]) and \
+                        (abs(self._v_k_arr[idx,col]) >= self.H_v[col])
+
+        if condition:
+            if not self._is_interval[col]:
+                self._init_idx[col] = idx
+                self._is_interval[col] = True
+            elif idx == len(self.X)-1 and self._is_interval[col]:
                 self._is_interval[col] = False
                 self._final_idx[col] = idx
-                self.intervals[col].append([self._init_idx[col], self._final_idx[col]])
+                self.intervals[col].append([self._init_idx[col], self._final_idx[col]])    
+        elif self._is_interval[col]:
+            self._is_interval[col] = False
+            self._final_idx[col] = idx
+            self.intervals[col].append([self._init_idx[col], self._final_idx[col]])
         
-    def recursive_exponential_moving_average_and_variance(self, verbose=10, n_jobs=-1):
+    def recursive_exponential_moving_average_and_variance(self):
         """
         Performs a recursive moving average/variance algorithm from past samples
         using a multithread approach.
-        
-        Arguments:
-            verbose: verbose level as in joblib library
-            n_jobs: the number of threads as in joblib library
         
         Output:
             self._mu_k_arr: the average filtered data for the given index
             self._v_k_arr: the variance filtered data for the given index
         """
         X = self.X
-        results = list(Parallel(n_jobs=n_jobs,
+        results = list(Parallel(n_jobs=self.n_jobs,
                                 require='sharedmem',
-                                verbose=verbose)(delayed(self._exponential_moving_average_and_variance)(X, idx)
-                                                 for idx in range(len(X))))
+                                verbose=self.verbose)(delayed(self._exponential_moving_average_and_variance)(X, idx)
+                                                      for idx in range(len(X))))
          
         self._mu_k_arr, self._v_k_arr = list(zip(*results))
         self._mu_k_arr = np.stack(self._mu_k_arr,axis=0)
@@ -952,7 +948,7 @@ class exponential_moving_average_and_variance():
         
         return self._mu_k_arr, self._v_k_arr
     
-    def chenge_points(self, criteria='variance', verbose=10, n_jobs=-1):
+    def change_points(self, criteria='variance'):
         """
         Searchs for change points in the filtered data and its
         corresponding intervals using a multithread approach.
@@ -960,8 +956,6 @@ class exponential_moving_average_and_variance():
         Arguments:
             criteria: the filter to be considered when looking for
                       a change-point (average, variance or both)
-            verbose: verbose level as in joblib library
-            n_jobs: the number of threads as in joblib library
         """
         #Reset Intervals
         self.intervals = defaultdict(list)
@@ -970,33 +964,170 @@ class exponential_moving_average_and_variance():
         self._criteria = criteria
         
         if (self._mu_k_arr is None) or (self._v_k_arr is None):
-            self._mu_k_arr, self._v_k_arr = self.recursive_exponential_moving_average_and_variance(verbose, n_jobs)
+            self._mu_k_arr, self._v_k_arr = self.recursive_exponential_moving_average_and_variance()
             
-        Parallel(n_jobs=n_jobs,
+        Parallel(n_jobs=self.n_jobs,
                  require='sharedmem',
-                 verbose=verbose)(delayed(self._search_for_change_points)(idx,criteria)
-                                  for idx in range(len(self.X)))
+                 verbose=self.verbose)(delayed(self._search_for_change_points)(idx,col,criteria)
+                                       for idx in range(len(self.X))
+                                       for col in range(self.X.shape[1]))
         
         self._is_interval = [False]*self.X.shape[1]
         self._init_idx = [0]*self.X.shape[1]
         self._final_idx = [0]*self.X.shape[1]
         
         return self.intervals
+
     
-    def plot_change_points(self, verbose=10, n_jobs=-1):
+    def _create_indicating_sequence(self):
+        """
+        This function creates an indicating sequence, i.e., an array containing 1's
+        in the intervals of interest and 0's otherwise, based on each interval obtained
+        by the bandpass filter approach.
+        
+        Output:
+            indicating_sequence: the indicating sequence
+        """
+        indicating_sequence = np.zeros(self.X.shape[0])
+        for idx, interval_arr in self.intervals.items():
+            for interval in interval_arr:
+                indicating_sequence[interval[0]:interval[1]+1] = 1
+                
+        return indicating_sequence
+
+    def _define_intervals_from_indicating_sequence(self,indicating_sequence):
+        """
+        Receives an indicating sequence, i.e., an array containing 1's
+        in the intervals of interest and 0's otherwise, and create a
+        dictionary with the intervals indexes.
+
+        Arguments:
+            indicating_sequence: an array containing 1's in the intervals of
+            interest and 0's otherwise.
+
+        Output:
+            sequences_dict: a dictionary with the sequences indexes
+        """
+        is_interval = False
+        interval_idx = -1
+
+        sequences_dict = defaultdict(list)
+        for idx, value in enumerate(indicating_sequence):
+            if idx == 0 and value == 1:
+                is_interval = True
+                interval_idx += 1
+            elif idx > 0:
+                if value == 1 and indicating_sequence[idx-1] == 0 and not is_interval:
+                    is_interval = True
+                    interval_idx += 1
+                elif value == 0 and indicating_sequence[idx-1] == 1 and is_interval:
+                    is_interval = False
+
+            if is_interval:
+                sequences_dict[interval_idx].append(idx)
+
+        return sequences_dict
+    
+    def fit(self):
+        """
+        This function performs the following routines:
+            - Applies the recursive exponential moving average/variance
+            - Compute the initial intervals (change-points)
+            - Creates an indicating sequence, unifying input and output intervals
+            - From the indicating sequence, creates a final unified interval
+        
+        Output:
+            unified_intervals: the final unified intervals for the input and output signals
+        """
+        
+        #Reset Internal Variables
+        self.unified_intervals = defaultdict(list)
+        self.intervals = defaultdict(list)
+        self._mu_k_arr = None
+        self._v_k_arr = None
+        self._mu_k = np.array([])
+        self._v_k = np.array([])
+        self._mu_k_1 = 0
+        self._v_k_1 = 0
+        self._is_interval = [False]*self.X.shape[1]
+        self._init_idx = [0]*self.X.shape[1]
+        self._final_idx = [0]*self.X.shape[1]
+        self._criteria = None
+        
+        #Apply Recursive Exponential Moving Average/Variance
+        self._mu_k_arr, self._v_k_arr = self.recursive_exponential_moving_average_and_variance()
+        
+        #Find change-points
+        intervals = self.change_points()
+        
+        #Create Indicating Sequence
+        indicating_sequence = self._create_indicating_sequence()
+        
+        #Define Intervals
+        self.unified_intervals = self._define_intervals_from_indicating_sequence(indicating_sequence=
+                                                                                 indicating_sequence)
+            
+        return self.unified_intervals
+    
+    def plot_parameter_grid(self):
+        """
+        Plots several combinations of forgetting factor parameters to help tunning.
+        """
+        
+        #Save Original Forgetting Factors
+        original_forgetting_fact_v = self.forgetting_fact_v
+        original_forgetting_fact_u = self.forgetting_fact_u
+        
+        #Grid of forgetting factors
+        param_grid = [0.0001, 0.0005, 0.001, 0.002, 0.003, 0.004, 0.005, 0.01]
+        
+        #Plot Grid
+        plot_arr = []
+        param_arr = []
+        for idx, param in enumerate(param_grid):
+            self.forgetting_fact_v = param
+            self.forgetting_fact_u = param
+            mu_k_arr, v_k_arr = self.recursive_exponential_moving_average_and_variance()
+            plot_arr.append(v_k_arr)
+            plot_arr.append(mu_k_arr)
+            param_arr.append(param)
+            param_arr.append(param)
+        
+        for col in range(self.X.shape[1]):
+            if self.df_cols is not None:
+                col_name = self.df_cols[col]
+            else:
+                col_name = col
+                
+            print("Grid for Column: {}".format(col_name))
+            
+            plt.figure(figsize=(15,60))
+            for idx, element in enumerate(plot_arr):
+                plt.subplot(len(plot_arr),2,idx+1)
+                if (idx+1)%2 == 0:
+                    plt.plot(element[:,col], color='darkmagenta', linewidth=2)
+                    plt.title("{}: Moving Average with Lambda = {}".format(col_name,param_arr[idx]),
+                              fontweight='bold',fontsize=14)
+                else:
+                    plt.plot(element[:,col], color='darkorange', linewidth=2)
+                    plt.title("{}: Moving Variance with Lambda = {}".format(col_name,param_arr[idx]),
+                              fontweight='bold',fontsize=14)
+            plt.tight_layout()
+            plt.show()
+        
+        self.forgetting_fact_v = original_forgetting_fact_v
+        self.forgetting_fact_u = original_forgetting_fact_u
+    
+    def plot_change_points(self):
         """
         Plots all found change points and its corresponding
         intervals.
-        
-        Arguments:
-            verbose: verbose level as in joblib library
-            n_jobs: the number of threads as in joblib library
         """
         if (self._mu_k_arr is None) or (self._v_k_arr is None):
-            self._mu_k_arr, self._v_k_arr = self.recursive_exponential_moving_average_and_variance(verbose, n_jobs)
+            self._mu_k_arr, self._v_k_arr = self.recursive_exponential_moving_average_and_variance()
         
         if not self.intervals:
-            intervals = self.chenge_points(verbose=verbose, n_jobs=n_jobs)
+            intervals = self.change_points()
         else:
             intervals = self.intervals
         
