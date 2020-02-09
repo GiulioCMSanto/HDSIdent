@@ -318,7 +318,7 @@ class bandpass_filter():
     bandpass filter from SciPy. Notice that the input frequencies are
     normalized into 0 and 1.
     """
-    def __init__(self, X, W, N, Ts = None, sigma = None, H=None, normalize=True):
+    def __init__(self, X, W, N, Ts = None, sigma = None, H=None, n_jobs=-1, verbose=0):
         """ 
         Constructor.
 
@@ -329,10 +329,13 @@ class bandpass_filter():
             sigma: data (population) standard deviation
             H: change-point threshold
             Ts: the sampling frequency of the digital filter (Default = 1.0 seconds)
-            normalize: whether or not to normalized the data (StandardScaler)
+            n_jobs: the number of CPUs to use
+            verbose: the degree of verbosity (going from 0 to 10)
         """
         self.W = W
         self.df_cols = None
+        self.n_jobs = n_jobs
+        self.verbose = verbose
 
         if type(X) == pd.core.frame.DataFrame:
             self.X = X.values
@@ -341,10 +344,6 @@ class bandpass_filter():
             self.X = X
         else:
             raise Exception("Input data must be a pandas dataframe or a numpy array") 
-        
-        if normalize:
-            scaler = StandardScaler()
-            self.X = scaler.fit_transform(self.X)
             
         if not sigma:
             self.sigma = np.std(X,axis=0)
@@ -366,9 +365,9 @@ class bandpass_filter():
         else:
             self.N = N
         
-        self.intervals = None
-        
         #Internal Variables
+        self.unified_intervals = None
+        self.intervals = None
         self.butt_mtrx = None
         self._is_interval = [False]*self.X.shape[1]
         self._init_idx = [0]*self.X.shape[1]
@@ -400,7 +399,7 @@ class bandpass_filter():
         
         return self.butt_mtrx
     
-    def _search_for_change_points(self, err_points, idx):
+    def _search_for_change_points(self, err_points, idx, col):
         """
         Receives the errors array and use it to find change points and
         its corresponding intervals.
@@ -408,31 +407,28 @@ class bandpass_filter():
         Arguments:
             err_points: an array with error values for camparing with a threshold
             idx: array index
+            col: the matrix column (the execution signal)
         """
-        for col in range(self.X.shape[1]):
-            if idx in list(err_points[col]):
-                if not self._is_interval[col]:
-                    self._init_idx[col] = idx
-                    self._is_interval[col] = True
-                elif idx == len(self.X)-1 and self._is_interval[col]:
-                    self._is_interval[col] = False
-                    self._final_idx[col] = idx
-                    self.intervals[col].append([self._init_idx[col], self._final_idx[col]])  
-            elif self._is_interval[col]:
-                self._final_idx[col] = idx-1
-                self.intervals[col].append([self._init_idx[col], self._final_idx[col]])
+        if idx in list(err_points[col]):
+            if not self._is_interval[col]:
+                self._init_idx[col] = idx
+                self._is_interval[col] = True
+            elif idx == len(self.X)-1 and self._is_interval[col]:
                 self._is_interval[col] = False
+                self._final_idx[col] = idx
+                self.intervals[col].append([self._init_idx[col], self._final_idx[col]])  
+        elif self._is_interval[col]:
+            self._final_idx[col] = idx-1
+            self.intervals[col].append([self._init_idx[col], self._final_idx[col]])
+            self._is_interval[col] = False
     
             
-    def chenge_points(self, verbose=10, n_jobs=-1):
+    def chenge_points(self):
         """
         Computes an error array and use it for finding
         changing points based on a given threshold H.
-        
-        Arguments:
-            verbose: verbose level as in joblib library
-            n_jobs: the number of threads as in joblib library
         """
+        
         X = self.X
         H = self.H
         self.intervals = defaultdict(list) 
@@ -445,10 +441,11 @@ class bandpass_filter():
         for col in range(X.shape[1]):
             self._err_points.append(np.where(np.abs(butt_mtrx[:,col]) >= H[col])[0])
 
-        Parallel(n_jobs=n_jobs,
+        Parallel(n_jobs=self.n_jobs,
                  require='sharedmem',
-                 verbose=verbose)(delayed(self._search_for_change_points)(self._err_points,idx)
-                                  for idx in range(len(X)))
+                 verbose=self.verbose)(delayed(self._search_for_change_points)(self._err_points,idx,col)
+                                       for idx in range(len(X))
+                                       for col in range(X.shape[1]))
         
         return self.intervals
     
@@ -471,15 +468,95 @@ class bandpass_filter():
         ax2.grid()
         ax2.axis('tight')
         plt.show()  
+    
+    def _create_indicating_sequence(self):
+        """
+        This function creates an indicating sequence, i.e., an array containing 1's
+        in the intervals of interest and 0's otherwise, based on each interval obtained
+        by the bandpass filter approach.
         
-    def plot_change_points(self, verbose=10, n_jobs=-1):
+        Output:
+            indicating_sequence: the indicating sequence
+        """
+        indicating_sequence = np.zeros(self.X.shape[0])
+        for idx, interval_arr in mv.intervals.items():
+            for interval in interval_arr:
+                indicating_sequence[interval[0]:interval[1]+1] = 1
+                
+        return indicating_sequence
+
+    def _define_intervals_from_indicating_sequence(self,indicating_sequence):
+        """
+        Receives an indicating sequence, i.e., an array containing 1's
+        in the intervals of interest and 0's otherwise, and create a
+        dictionary with the intervals indexes.
+
+        Arguments:
+            indicating_sequence: an array containing 1's in the intervals of
+            interest and 0's otherwise.
+
+        Output:
+            sequences_dict: a dictionary with the sequences indexes
+        """
+        is_interval = False
+        interval_idx = -1
+
+        sequences_dict = defaultdict(list)
+        for idx, value in enumerate(indicating_sequence):
+            if idx == 0 and value == 1:
+                is_interval = True
+                interval_idx += 1
+            elif idx > 0:
+                if value == 1 and indicating_sequence[idx-1] == 0 and not is_interval:
+                    is_interval = True
+                    interval_idx += 1
+                elif value == 0 and indicating_sequence[idx-1] == 1 and is_interval:
+                    is_interval = False
+
+            if is_interval:
+                sequences_dict[interval_idx].append(idx)
+
+        return sequences_dict
+
+    def fit(self):
+        """
+        This function performs the following routines:
+            - Applies the Butterworth Filter in the signal
+            - From the filtered signal, defines the initial intervals (change-points)
+            - Creates an indicating sequence, unifying input and output intervals
+            - From the indicating sequence, creates a final unified interval
+        """
+        
+        #Reset Internal Variables
+        self.unified_intervals = None
+        self.intervals = None
+        self.butt_mtrx = None
+        self._is_interval = [False]*self.X.shape[1]
+        self._init_idx = [0]*self.X.shape[1]
+        self._final_idx = [0]*self.X.shape[1]
+        self._err_points = list()
+        self._num = 0
+        self._den = 0
+        
+        #Apply Butterworth Filter
+        _ = self.butterworth_filter()
+        
+        #Find change-points
+        _ = self.chenge_points()
+        
+        #Create Indicating Sequence
+        indicating_sequence = self._create_indicating_sequence()
+        
+        #Define Intervals
+        self.unified_intervals = self._define_intervals_from_indicating_sequence(indicating_sequence=
+                                                                                 indicating_sequence)
+        
+        return self.unified_intervals
+    
+    def plot_change_points(self):
         """
         Plots all found change points and its corresponding
         intervals.
-        
-        Arguments:
-            verbose: verbose level as in joblib library
-            n_jobs: the number of threads as in joblib library
         """
         
         if self.butt_mtrx is None:
