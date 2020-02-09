@@ -479,7 +479,7 @@ class BandpassFilter():
             indicating_sequence: the indicating sequence
         """
         indicating_sequence = np.zeros(self.X.shape[0])
-        for idx, interval_arr in mv.intervals.items():
+        for idx, interval_arr in self.intervals.items():
             for interval in interval_arr:
                 indicating_sequence[interval[0]:interval[1]+1] = 1
                 
