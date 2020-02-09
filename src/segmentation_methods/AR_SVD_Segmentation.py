@@ -437,8 +437,6 @@ class ARSVDSegmentation(object):
         
         #Verify data format
         X, y, X_cols, y_cols = self._verify_data(X,y)
-        print(X.shape)
-        print(y.shape)
         
         #Make an Parallel executor
         executor = Parallel(require='sharedmem',
