@@ -341,7 +341,7 @@ class ExponentialWeighted(object):
             intervals_arr = intervals[col]
             
             sns.set_style("darkgrid")
-            plt.figure(figsize=(8,5))
+            plt.figure(figsize=(15,5))
             if self._criteria == 'variance':
                 plt.plot(self._v_k_arr[:,col])
             elif self._criteria == 'average':
