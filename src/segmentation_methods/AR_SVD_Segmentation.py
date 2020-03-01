@@ -40,7 +40,7 @@ class ARSVDSegmentation(object):
             ny: the Autoregressive structure order
             delay: the maximum/minimum cross-correlation lag value between the input and the output signals
             alpha: the significance level to be considered for the cross-correlation test
-            initial_intervals: the initial interval indexes
+            initial_intervals: the initial intervals indexes
             efr_type: the effective rank type (type_1 or type_2)
             efr_thr: the effective rank threshold required to accept an interval for system identification
             cc_thr: cross-correlation threshold required to accept an interval for system identification

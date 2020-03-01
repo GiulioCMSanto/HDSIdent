@@ -11,22 +11,20 @@ class ExponentialWeighted(object):
     Exponential Moving Average Control Chart. Performs a
     recursive moving average filter and detects
     change points and its corresponding intervals.
+
+    Arguments:
+        X: the input discrete-time data
+        forgetting_fact_v: exponential forgetting factor for the variance
+        forgetting_fact_u: exponential forgetting factor for the average
+        sigma: data (population) standard deviation
+        H_u: change-point threshold for the mean
+        H_v: change-point threshold for the variance
+        normalize: whether or not to normalized the data (StandardScaler)
+        verbose: verbose level as in joblib library
+        n_jobs: the number of threads as in joblib library
     """
-    def __init__(self, X, forgetting_fact_v, forgetting_fact_u, sigma = None, H_u=None, H_v = None,n_jobs=-1,verbose=0):
-        """ 
-        Constructor.
-        
-        Arguments:
-            X: the input discrete-time data
-            forgetting_fact_v: exponential forgetting factor for the variance
-            forgetting_fact_u: exponential forgetting factor for the average
-            sigma: data (population) standard deviation
-            H_u: change-point threshold for the mean
-            H_v: change-point threshold for the variance
-            normalize: whether or not to normalized the data (StandardScaler)
-            verbose: verbose level as in joblib library
-            n_jobs: the number of threads as in joblib library
-        """
+    def __init__(self, X, forgetting_fact_v, forgetting_fact_u, sigma = None, H_u=None, H_v = None, n_jobs=-1, verbose=0):
+
         self.forgetting_fact_v = forgetting_fact_v
         self.forgetting_fact_u = forgetting_fact_u
         self.df_cols = None
