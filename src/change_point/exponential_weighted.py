@@ -1,10 +1,12 @@
 import pandas as pd
 import numpy as np
+import plotly.graph_objects as go
 from collections import defaultdict
 from joblib import Parallel, delayed
 
 import matplotlib.pyplot as plt
 import seaborn as sns
+sns.set_style('darkgrid')
 
 class ExponentialWeighted(object):
     """
@@ -67,6 +69,7 @@ class ExponentialWeighted(object):
         self._init_idx = [0]*self.X.shape[1]
         self._final_idx = [0]*self.X.shape[1]
         self._criteria = None
+        self._intervals_parameter_grid = {}
         
     def _exponential_moving_average_and_variance(self, X, idx):
         """
@@ -193,7 +196,7 @@ class ExponentialWeighted(object):
             indicating_sequence: the indicating sequence
         """
         indicating_sequence = np.zeros(self.X.shape[0])
-        for idx, interval_arr in self.intervals.items():
+        for _, interval_arr in self.intervals.items():
             for interval in interval_arr:
                 indicating_sequence[interval[0]:interval[1]+1] = 1
                 
@@ -262,7 +265,7 @@ class ExponentialWeighted(object):
         self._mu_k_arr, self._v_k_arr = self.recursive_exponential_moving_average_and_variance()
         
         #Find change-points
-        intervals = self.change_points()
+        _ = self.change_points()
         
         #Create Indicating Sequence
         indicating_sequence = self._create_indicating_sequence()
@@ -273,7 +276,7 @@ class ExponentialWeighted(object):
             
         return self.unified_intervals
     
-    def plot_parameter_grid(self):
+    def plot_filters_grid(self):
         """
         Plots several combinations of forgetting factor parameters to help tunning.
         """
@@ -322,6 +325,212 @@ class ExponentialWeighted(object):
         self.forgetting_fact_v = original_forgetting_fact_v
         self.forgetting_fact_u = original_forgetting_fact_u
     
+    def _plot_intervals_grid_surface(self,
+                                     plot_title,
+                                     x_axis,
+                                     x_label,
+                                     y_axis,
+                                     y_label,
+                                     z_axis,
+                                     z_label):
+        """
+        This function creates a 3D Surface Plot containing the number
+        of intervals produced by the moving average algorithm for a
+        grid of parameters. The figure is produced using Plotly.
+        
+        Arguments:
+            plot_title: the surface plot title.
+            x_axis: the x axis.
+            x_label: the x axis label.
+            y_axis: the y axis.
+            y_label: the y axis label.
+            z_axis: the z axis.
+            z_label: the x axis label.
+        """
+        fig = go.Figure(go.Surface(
+            x = x_axis,
+            y = y_axis,
+            z = z_axis
+            ))
+
+        fig.update_layout(autosize=True,
+                          width=1000,
+                          height=500,
+                          scene = dict(
+                            xaxis = dict(title = x_label, nticks = 10),
+                            yaxis = dict(title = y_label, nticks = 10),
+                            zaxis = dict(title = z_label, nticks = 10),
+                            aspectratio =  {"x": 1.2, "y": 1.2, "z": 0.5},
+                            camera = dict(eye=dict(x=1.2, y=1.2, z=0.1))
+                          ),
+                          title={
+                          'text': plot_title,
+                          'y':0.9,
+                          'x':0.5,
+                          'xanchor': 'center',
+                          'yanchor': 'top'}
+                        )
+        
+        fig.show()
+    
+    def _intervals_grid_iteration(self, factor_grid, H_v_grid, individual_plot):
+        """
+        This function iterates over the forgetting factor parameters and the
+        threshold parameters to create the parameters grid.
+        
+        Arguments:
+            factor_grid: the forgetting factor values used to create the parameters grid.
+            H_v_grid: the variance threshold values used to create the parameters grid.
+            individual_plot: If True, a 3D surface plot will be produce
+            for each signal in the dataframe. If False, all signals will
+            have the same value of forgetting factors and will be evaluated
+            under the same variance threshold.  
+        """
+        
+        #Determines the number of signals to set the Variance threshold
+        if individual_plot:
+            k = 1
+        else:
+            k = self.X.shape[1]
+        
+        #Compute grid matrix
+        num_intervals_arr = np.zeros((len(factor_grid),len(H_v_grid)))
+        for idx_1, factor in enumerate(factor_grid):
+            for idx_2, H_v in enumerate(H_v_grid):
+                self.forgetting_fact_v = factor
+                self.forgetting_fact_u = factor
+                self.H_v = [H_v]*k
+
+                intervals = self.fit()
+                num_intervals_arr[idx_2,idx_1] = len(intervals.keys())
+        
+        return num_intervals_arr
+    
+    def _create_intervals_parameters_grid_df(self, num_intervals_arr, factor_grid, H_v_grid, col):
+        """
+        Creates a dictinary of dataframes for the grid of parameters vs intervals,
+        for the given signal.
+        
+        Arguments:
+            num_intervals_arr: the parameters grid matrix, where each row corresponds
+            to a forgetting factor and each column corresponds to a variance threshold.
+            factor_grid: the forgetting factor values used to create the parameters grid.
+            H_v_grid: the variance threshold values used to create the parameters grid.
+            col: the column index of the signal being considered in the grid.
+        """
+        
+        #Define the dictionary key
+        if col is None:
+            key = 'all_signals'
+        else:
+            key = col
+        
+        #Create a dataframe based on the num_intervals_arr matrix
+        self._intervals_parameter_grid[key] = pd.DataFrame(num_intervals_arr)
+        self._intervals_parameter_grid[key].index = factor_grid
+        self._intervals_parameter_grid[key].columns = H_v_grid
+        
+        #Update the dataframe index and column names
+        df = {}
+        df['Variance Threshold'] = self._intervals_parameter_grid[key]
+        self._intervals_parameter_grid[key] = pd.concat(df,axis=1)
+        self._intervals_parameter_grid[key] = self._intervals_parameter_grid[key].rename_axis(['Forgetting Factor'])
+        
+        #Inser Color in the Dataframe
+        cm = sns.light_palette("green", as_cmap=True)
+        self._intervals_parameter_grid[key] = self._intervals_parameter_grid[key].style.background_gradient(cmap=cm)
+        
+    def plot_intervals_grid(self, individual_plot = False):
+        """
+        This function plots a 3D surface figure containing the number
+        of intervals produced by the moving average algorithm for a
+        grid of parameters.
+        
+        Arguments:
+            individual_plot: If True, a 3D surface plot will be produce
+            for each signal in the dataframe. If False, all signals will
+            have the same value of forgetting factors and will be evaluated
+            under the same variance threshold.
+        """
+        
+        #Save Original Forgetting Factors
+        original_forgetting_fact_v = self.forgetting_fact_v
+        original_forgetting_fact_u = self.forgetting_fact_u
+        original_H_v = self.H_v
+        original_X = self.X
+        
+        #Grid of forgetting factors
+        #factor_grid = [0.0001, 0.0005, 0.001, 0.002, 0.003, 0.004, 0.005, 0.01]
+        factor_grid = [0.003, 0.004, 0.005, 0.01]
+        
+        #Grid of Thresholds
+        #H_v_grid = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.7, 1]
+        H_v_grid = [0.2, 0.5, 0.7, 1]
+        
+        #Iterate Over Grid
+        if individual_plot:
+            for col in range(self.X.shape[1]):
+                
+                #Take Corresponding Signal of index col
+                self.X = self.X[:,col].reshape(-1,1)
+                
+                #Take Signal Name
+                if self.df_cols is not None:
+                    col_name = self.df_cols[col]
+                else:
+                    col_name = col
+                
+                #Take Grid of Parameters
+                num_intervals_arr = self._intervals_grid_iteration(factor_grid = factor_grid,
+                                                                   H_v_grid = H_v_grid,
+                                                                   individual_plot = individual_plot)
+                
+                #Create the Grid Dataframe
+                self._create_intervals_parameters_grid_df(num_intervals_arr = num_intervals_arr,
+                                                          factor_grid = factor_grid,
+                                                          H_v_grid = H_v_grid,
+                                                          col = col_name)
+            
+                plot_title = 'Number of Intervals X Parameters for Signal {}'.format(col_name)
+                x_label = 'Forgetting Factor'
+                y_label = 'Variance Threshold'
+                z_label = 'Number of Intervals'
+                self._plot_intervals_grid_surface(plot_title=plot_title,
+                                                  x_axis=factor_grid,
+                                                  x_label=x_label,
+                                                  y_axis=H_v_grid,
+                                                  y_label=y_label,
+                                                  z_axis=num_intervals_arr,
+                                                  z_label=z_label)
+                self.X = original_X
+        else:
+            num_intervals_arr = self._intervals_grid_iteration(factor_grid = factor_grid,
+                                                               H_v_grid = H_v_grid,
+                                                               individual_plot = individual_plot)
+            
+            self._create_intervals_parameters_grid_df(num_intervals_arr = num_intervals_arr,
+                                                      factor_grid = factor_grid,
+                                                      H_v_grid = H_v_grid,
+                                                      col = None)
+            
+            plot_title = 'Number of Intervals X Parameters for All Signals'
+            x_label = 'Forgetting Factor'
+            y_label = 'Variance Threshold'
+            z_label = 'Number of Intervals'
+            self._plot_intervals_grid_surface(plot_title=plot_title,
+                                              x_axis=factor_grid,
+                                              x_label=x_label,
+                                              y_axis=H_v_grid,
+                                              y_label=y_label,
+                                              z_axis=num_intervals_arr,
+                                              z_label=z_label)
+        
+        #Reset Class Input variables
+        self.forgetting_fact_v = original_forgetting_fact_v
+        self.forgetting_fact_u = original_forgetting_fact_u
+        self.H_v = original_H_v 
+        self.X = original_X
+            
     def plot_change_points(self):
         """
         Plots all found change points and its corresponding
