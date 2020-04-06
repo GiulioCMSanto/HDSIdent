@@ -15,12 +15,13 @@ class Preprocessing(object):
     Arguments:
         df: an input dataframe or array
         scaler: the scaler type to be used
+        feature_range: the feature range as a tuple (min, max)
         k: the number of initial samples to be removed
         W: input frequency
         N: Butterworth filter order
         Ts: the sampling frequency of the digital filter (Default = 1.0 seconds)
     """
-    def __init__(self, df, scaler='StandardScaler', k=10, W=0.05, N=1, Ts=1):
+    def __init__(self, df, scaler='StandardScaler', feature_range = (0,1), k=10, W=0.05, N=1, Ts=1):
         
         if type(df) == pd.core.frame.DataFrame:
             self.df = df.values
@@ -32,6 +33,7 @@ class Preprocessing(object):
             raise Exception("Input data must be a pandas dataframe or a numpy array") 
             
         self.scaler = scaler
+        self.feature_range = feature_range
         self.k = k
         self.W = W
         self.N = N
@@ -43,7 +45,7 @@ class Preprocessing(object):
         provided.
         """
         if self.scaler == 'MinMaxScaler':
-            scl = MinMaxScaler()
+            scl = MinMaxScaler(feature_range = self.feature_range)
             self.df = scl.fit_transform(self.df)
         elif self.scaler == 'StandardScaler':
             scl = StandardScaler()

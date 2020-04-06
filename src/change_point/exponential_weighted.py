@@ -350,7 +350,8 @@ class ExponentialWeighted(object):
         fig = go.Figure(go.Surface(
             x = x_axis,
             y = y_axis,
-            z = z_axis
+            z = z_axis,
+            colorscale='PuOr'
             ))
 
         fig.update_layout(autosize=True,
