@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
+from copy import deepcopy
 from scipy.stats import chi2
 from collections import defaultdict
 from joblib import Parallel, delayed
-
 
 class MIMOSegmentation(object):
     """
@@ -64,6 +64,9 @@ class MIMOSegmentation(object):
         segmentation does not change the initial intervals provided. The incremental segmentation
         augment the initial intervals until the validation conditions are satisfied.
         
+        increment_size: the number of indexes to increment in the incremental segmentation. For example,
+        if increment_size = 10, the incrementation jumps 10 indexes every iteration.
+        
         n_jobs: the number of CPUs to use
         verbose: the degree of verbosity (from 0 to 10)
         
@@ -73,12 +76,13 @@ class MIMOSegmentation(object):
                  segmentation_method,
                  parameters_dict,
                  segmentation_type='stationary',
+                 increment_size = 10,
                  n_jobs=-1,
                  verbose=0):
         
-        self.model_structure = model_structure
+        self.model_structure = deepcopy(model_structure)
         if np.ndim(self.model_structure) == 0:
-            self.model_structure = [self.model_structure]
+            self.model_structure = [deepcopy(self.model_structure)]
             
         self.segmentation_method = segmentation_method
         if np.ndim(self.segmentation_method) == 0:
@@ -86,6 +90,7 @@ class MIMOSegmentation(object):
             
         self.parameters_dict = parameters_dict
         self.segmentation_type = segmentation_type
+        self.increment_size = increment_size
         self.n_jobs = n_jobs
         self.verbose = verbose
     
@@ -105,13 +110,15 @@ class MIMOSegmentation(object):
         
         #Initialize Internal Variables
         self._metrics_dict = defaultdict(nested_dict)
+        self._incremental_metrics_dict = defaultdict(nested_dict)
         self._test_resuts = defaultdict(nested_dict)
-        self.segments_idx = defaultdict(nested_dict)
         self._segment_sucesses_dict = defaultdict(nested_dict)
-        self.sucessed_intervals = defaultdict(nested_dict)
+        self._last_test_succeeded = defaultdict(nested_dict)
+        self._indexes_of_failure = defaultdict(nested_dict)
         self.tests_results = defaultdict(nested_dict)
+        self.sucessed_intervals = defaultdict(nested_dict)
     
-    def _compute_model_metrics(self, X, y):
+    def _compute_model_metrics(self, X, y, verbose=0):
         """
         This function takes the metrics computed by
         a particular model structure and stores them
@@ -132,7 +139,7 @@ class MIMOSegmentation(object):
         """
         for structure in self.model_structure:
             
-            if self.verbose > 0:
+            if verbose > 0:
                 print(f"Fitting {structure.name} Model Structure...")
                 
             (miso_ranks, 
@@ -145,8 +152,8 @@ class MIMOSegmentation(object):
             self._metrics_dict[structure.name]['cond_num_dict'] = cond_num_dict
             self._metrics_dict[structure.name]['qui_squared_dict'] = qui_squared_dict
             
-            if self.verbose > 0:
-                print(f"{structure.name} Structure fit finished!")
+            if verbose > 0:
+                print(f"{structure.name} Structure fit finished! \n\n")
                 
     def _method1(self, method, structure, interval_idx):
         """
@@ -227,6 +234,14 @@ class MIMOSegmentation(object):
                                    [structure.name]\
                                    ['segment_'+str(interval_idx)] = \
                 structure.initial_intervals[interval_idx]
+            
+            self._last_test_succeeded[method]\
+                                     [structure.name]\
+                                     ['segment_'+str(interval_idx)] = True
+        else:
+            self._last_test_succeeded[method]\
+                                     [structure.name]\
+                                     ['segment_'+str(interval_idx)] = False            
     
     def _method2(self, method, structure, interval_idx):
         """
@@ -308,6 +323,14 @@ class MIMOSegmentation(object):
                                    ['segment_'+str(interval_idx)] = \
                 structure.initial_intervals[interval_idx]
     
+            self._last_test_succeeded[method]\
+                                     [structure.name]\
+                                     ['segment_'+str(interval_idx)] = True
+        else:
+            self._last_test_succeeded[method]\
+                                     [structure.name]\
+                                     ['segment_'+str(interval_idx)] = False       
+            
     def _method3(self, method, structure, interval_idx):
         """
         This segmentation method considers an interval suitable
@@ -387,6 +410,14 @@ class MIMOSegmentation(object):
                                    [structure.name]\
                                    ['segment_'+str(interval_idx)] = \
                 structure.initial_intervals[interval_idx]
+    
+            self._last_test_succeeded[method]\
+                                     [structure.name]\
+                                     ['segment_'+str(interval_idx)] = True
+        else:
+            self._last_test_succeeded[method]\
+                                     [structure.name]\
+                                     ['segment_'+str(interval_idx)] = False       
             
     def _method4(self, method, structure, interval_idx):
         """
@@ -467,6 +498,14 @@ class MIMOSegmentation(object):
                                    [structure.name]\
                                    ['segment_'+str(interval_idx)] = \
                 structure.initial_intervals[interval_idx]
+            
+            self._last_test_succeeded[method]\
+                                     [structure.name]\
+                                     ['segment_'+str(interval_idx)] = True
+        else:
+            self._last_test_succeeded[method]\
+                                     [structure.name]\
+                                     ['segment_'+str(interval_idx)] = False       
             
     def _method5(self, method, structure, interval_idx):
         """
@@ -558,6 +597,14 @@ class MIMOSegmentation(object):
                                    ['segment_'+str(interval_idx)] = \
                 structure.initial_intervals[interval_idx]
             
+            self._last_test_succeeded[method]\
+                                     [structure.name]\
+                                     ['segment_'+str(interval_idx)] = True
+        else:
+            self._last_test_succeeded[method]\
+                                     [structure.name]\
+                                     ['segment_'+str(interval_idx)] = False       
+            
     def _method6(self, method, structure, interval_idx):
         """
         This segmentation method considers an interval suitable
@@ -647,6 +694,14 @@ class MIMOSegmentation(object):
                                    [structure.name]\
                                    ['segment_'+str(interval_idx)] = \
                 structure.initial_intervals[interval_idx]
+            
+            self._last_test_succeeded[method]\
+                                     [structure.name]\
+                                     ['segment_'+str(interval_idx)] = True
+        else:
+            self._last_test_succeeded[method]\
+                                     [structure.name]\
+                                     ['segment_'+str(interval_idx)] = False       
             
     def _method7(self, method, structure, interval_idx):
         """
@@ -749,7 +804,15 @@ class MIMOSegmentation(object):
                                    ['segment_'+str(interval_idx)] = \
                 structure.initial_intervals[interval_idx]
             
-    def _apply_stationary_segmentation(self):
+            self._last_test_succeeded[method]\
+                                     [structure.name]\
+                                     ['segment_'+str(interval_idx)] = True
+        else:
+            self._last_test_succeeded[method]\
+                                     [structure.name]\
+                                     ['segment_'+str(interval_idx)] = False       
+            
+    def _apply_stationary_segmentation(self, verbose=0):
         """
         This function applies a stationary MIMO segmentation
         for System Identification. The stationary segmentation
@@ -766,12 +829,12 @@ class MIMOSegmentation(object):
             #Make an Parallel executor
             executor = Parallel(require='sharedmem',
                                 n_jobs=self.n_jobs,
-                                verbose=self.verbose)
+                                verbose=verbose)
             
             #Make Segmentation
             method_func = getattr(self, '_' + method)
             
-            if self.verbose > 0:
+            if verbose > 0:
                 print(f"Beginning Stationary Segmentation for {method}...")
                 
             method_task = (delayed(method_func)(method, structure, interval_idx)
@@ -779,9 +842,95 @@ class MIMOSegmentation(object):
                            for interval_idx in structure.initial_intervals.keys())
             executor(method_task)  
             
-            if self.verbose > 0:
-                print("Stationary Segmentation Finished!")
+            if verbose > 0:
+                print("Stationary Segmentation Finished! \n\n")
+             
+    def _apply_incremental_segmentation(self, X, y, verbose=0):
+        """
+        This function applies an incremental MIMO segmentation
+        for System Identification. The incremental segmentation
+        performs a stationary segmentation and, for the intervals
+        that succeeded, make an incrementation process. The succeeded
+        intervals are incremented until the conditions for the provided
+        method(s) are satisfied or until consecutive intervals are
+        merged.
+        """
+        
+        if verbose > 0:
+            print("Beginning Incremental Segmentation... \n")
+            
+        #Apply Stationary Segmentation
+        if verbose > 0:
+            print("Making Initial Segmentation... \n")
+        self._apply_stationary_segmentation()
+        
+        #Store Stationary Metrics
+        stationary_metrics = deepcopy(self._metrics_dict)
+        
+        original_structures = []
+        #Loop Over The Succeded Segments and Increment them
+        for method in self.segmentation_method:
+            for structure in self.model_structure:
                 
+                #Store Original Model Structure List
+                original_structures.append(deepcopy(structure))
+                
+                #Order Intervals Dictionary
+                intervals_dict = self.sucessed_intervals[method][structure.name]
+                intervals_dict = {k: v for k, v in sorted(intervals_dict.items(), key=lambda item: item[1])}
+                
+                #For Each Interval in This Particular Method and Model Structure,
+                #Increment the Interval and apply the stationary segmentation again
+                #until the conditions fails or consecutive intervals are merged
+                counter = 0
+                for key, interval in intervals_dict.items():
+                    
+                    if verbose > 0:
+                        print("Incrementing Segment {} for Model Structure {} using {}".\
+                              format(key, structure.name, method))
+                    
+                    #Find interval max index and next interval
+                    #minimum index in order to avoid overlapping
+                    interval_max_idx = np.max(interval)
+                    if counter + 1 < len(list(intervals_dict.keys())):
+                        next_interval_min_idx = np.min(intervals_dict[list(intervals_dict.keys())[counter+1]])
+                    else:
+                        next_interval_min_idx = X.shape[0] - 1
+                    
+                    #Increment Interval
+                    for idx in np.arange(interval_max_idx+1, next_interval_min_idx, self.increment_size):
+                        #Check if last stationary segmentaion failed or not
+                        if self._last_test_succeeded[method][structure.name][key]:
+                            structure.initial_intervals[int(key.split('_')[1])].append(idx)
+                            self._compute_model_metrics(X=X,y=y)
+                            self._apply_stationary_segmentation()
+                            
+                            if verbose > 0:
+                                print("Current Index: {}".\
+                                      format(np.max(structure.initial_intervals[int(key.split('_')[1])])))
+                                print("Condition Number: {}".\
+                                      format(self._metrics_dict[structure.name]['cond_num_dict'][key]))
+                                print("Qui-squared Test: {}".\
+                                      format(self._metrics_dict[structure.name]['qui_squared_dict'][key]))
+                                print("Effective Ranks: {}".\
+                                      format(self._metrics_dict[structure.name]['miso_ranks'][key]))
+                                print("Scalar Cross-correlation: {} \n".\
+                                      format(self._metrics_dict[structure.name]['miso_correlations'][key]))
+                        else:
+                            self._indexes_of_failure[method][structure.name][key] = idx - self.increment_size
+                            break
+                    counter+=1
+        
+        #Restore Original Model Structures
+        self.model_structure = original_structures
+        
+        #Restore Stationary Metrics
+        self._incremental_metrics_dict = deepcopy(self._metrics_dict)
+        self._metrics_dict = stationary_metrics
+        
+        if verbose > 0:
+            print("Incremental Segmentation Successfully Finished! \n\n")
+                                                       
     def fit(self, X, y):
         """
         This function performs all the steps required for
@@ -800,8 +949,10 @@ class MIMOSegmentation(object):
         self._initialize_internal_variables()
         
         #Fit model Structures
-        self._compute_model_metrics(X=X,y=y)
+        self._compute_model_metrics(X=X,y=y,verbose=self.verbose)
         
         #Make Segmentation
         if self.segmentation_type == 'stationary':
-            self._apply_stationary_segmentation()
+            self._apply_stationary_segmentation(verbose=self.verbose)
+        else:
+            self._apply_incremental_segmentation(X=X, y=y, verbose=self.verbose)
