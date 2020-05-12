@@ -152,7 +152,7 @@ class ARStructure(ModelStructure):
             
         #Compute AR Regressor Matrix
         ar_regressor_task = (delayed(self._AR_regressor_matrix)(X,y,self.ny,input_idx,X_cols,output_idx,y_cols,segment)
-                             for segment in range(0,len(self.initial_intervals))
+                             for segment in self.initial_intervals.keys()
                              for input_idx in range(0,X.shape[1])
                              for output_idx in range(0,y.shape[1]))
         executor(ar_regressor_task)
@@ -172,7 +172,7 @@ class ARStructure(ModelStructure):
             
         #Compute the Effective Rank for each MISO system 
         miso_ranks_task = (delayed(self._compute_AR_miso_ranks)(X,y,input_idx,X_cols,output_idx,y_cols,segment)
-                           for segment in range(0,len(self.initial_intervals))
+                           for segment in self.initial_intervals.keys()
                            for input_idx in range(0,X.shape[1])
                            for output_idx in range(0,y.shape[1]))
         executor(miso_ranks_task)
