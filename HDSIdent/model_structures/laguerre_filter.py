@@ -213,7 +213,7 @@ class LaguerreStructure(ModelStructure):
         lg_regressor_task = (delayed(self._compute_leguerre_regressor_matrix)(X, y, input_idx,
                                                                               X_cols, output_idx,
                                                                               y_cols, segment)
-                              for segment in range(0,len(self.initial_intervals))
+                              for segment in self.initial_intervals.keys()
                               for input_idx in range(0,X.shape[1])
                               for output_idx in range(0,y.shape[1]))
         executor(lg_regressor_task)
@@ -237,7 +237,7 @@ class LaguerreStructure(ModelStructure):
         miso_ranks_task = (delayed(self._compute_Laguerre_miso_ranks)(X, y, input_idx, 
                                                                       X_cols, output_idx,
                                                                       y_cols, segment)
-                           for segment in range(0,len(self.initial_intervals))
+                           for segment in self.initial_intervals.keys()
                            for input_idx in range(0,X.shape[1])
                            for output_idx in range(0,y.shape[1]))
         

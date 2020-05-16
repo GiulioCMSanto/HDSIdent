@@ -56,20 +56,24 @@ class ExponentialWeighted(object):
         else:
             self.H_v = H_v
         
-        #Internal Variables
+    def _initialize_internal_variables(self):
+        """
+        This function initializes the interval variables.
+        """
         self.unified_intervals = defaultdict(list)
         self.intervals = defaultdict(list)
         self._mu_k_arr = None
         self._v_k_arr = None
         self._mu_k = np.array([])
         self._v_k = np.array([])
-        self._mu_k_1 = 0
-        self._v_k_1 = 0
         self._is_interval = [False]*self.X.shape[1]
         self._init_idx = [0]*self.X.shape[1]
         self._final_idx = [0]*self.X.shape[1]
         self._criteria = None
-        self._intervals_parameter_grid = {}
+        
+        self._mu_k_1 = np.mean(self.X[:100,:],axis=0)
+        self._v_k_1 = np.var(self.X[:100,:],axis=0)
+
         
     def _exponential_moving_average_and_variance(self, X, idx):
         """
@@ -88,7 +92,7 @@ class ExponentialWeighted(object):
         self._mu_k = self.forgetting_fact_u*X[idx,:] + (1-self.forgetting_fact_u)*self._mu_k_1
         self._v_k = ((2-self.forgetting_fact_u)/2)*(self.forgetting_fact_v*(X[idx,:]-self._mu_k)**2 + 
                                                    (1-self.forgetting_fact_v)*self._v_k_1)
-   
+        
         self._mu_k_1 = self._mu_k
         self._v_k_1 = self._v_k
         
@@ -149,9 +153,6 @@ class ExponentialWeighted(object):
         self._mu_k_arr, self._v_k_arr = list(zip(*results))
         self._mu_k_arr = np.stack(self._mu_k_arr,axis=0)
         self._v_k_arr = np.stack(self._v_k_arr,axis=0)
-        
-        self._mu_k_1 = 0
-        self._v_k_1 = 0
         
         return self._mu_k_arr, self._v_k_arr
     
@@ -247,19 +248,8 @@ class ExponentialWeighted(object):
             unified_intervals: the final unified intervals for the input and output signals
         """
         
-        #Reset Internal Variables
-        self.unified_intervals = defaultdict(list)
-        self.intervals = defaultdict(list)
-        self._mu_k_arr = None
-        self._v_k_arr = None
-        self._mu_k = np.array([])
-        self._v_k = np.array([])
-        self._mu_k_1 = 0
-        self._v_k_1 = 0
-        self._is_interval = [False]*self.X.shape[1]
-        self._init_idx = [0]*self.X.shape[1]
-        self._final_idx = [0]*self.X.shape[1]
-        self._criteria = None
+        #Initialize Internal Variables
+        self._initialize_internal_variables()
         
         #Apply Recursive Exponential Moving Average/Variance
         self._mu_k_arr, self._v_k_arr = self.recursive_exponential_moving_average_and_variance()
@@ -280,7 +270,6 @@ class ExponentialWeighted(object):
         """
         Plots several combinations of forgetting factor parameters to help tunning.
         """
-        
         #Save Original Forgetting Factors
         original_forgetting_fact_v = self.forgetting_fact_v
         original_forgetting_fact_u = self.forgetting_fact_u
@@ -292,6 +281,10 @@ class ExponentialWeighted(object):
         plot_arr = []
         param_arr = []
         for idx, param in enumerate(param_grid):
+            
+            #Initialize Internal Variables
+            self._initialize_internal_variables()
+    
             self.forgetting_fact_v = param
             self.forgetting_fact_u = param
             mu_k_arr, v_k_arr = self.recursive_exponential_moving_average_and_variance()
@@ -464,7 +457,7 @@ class ExponentialWeighted(object):
         factor_grid = [0.0001, 0.0005, 0.001, 0.002, 0.003, 0.004, 0.005, 0.01]
         
         #Grid of Thresholds
-        H_v_grid = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.7, 1]
+        H_v_grid = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.008, 0.1]
         
         #Iterate Over Grid
         if individual_plot:
