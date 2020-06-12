@@ -1,4 +1,4 @@
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, scale
 from collections import defaultdict
 from scipy import signal
 import pandas as pd
@@ -175,6 +175,12 @@ class Preprocessing(object):
         y_aux = self._remove_first_samples(data=y)
         
         #Scale Data
+        data = np.concatenate([X,y],axis=1)
+        data = scale(data)
+        
+        X_aux = data[:,:X.shape[1]]
+        y_aux = data[:,X.shape[1]:]
+        
         X_aux = self._scale(data=X_aux)
         y_aux = self._scale(data=y_aux)
         
