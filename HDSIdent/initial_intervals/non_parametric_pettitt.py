@@ -351,7 +351,7 @@ class PettittMethod(object):
            
             sns.set_style("darkgrid")
             plt.figure(figsize=(15,5))
-            plt.plot(data[:,data_idx])
+            plt.plot(data[:,data_idx],zorder=1,linewidth=0.8, color='coral')
             col_name = f"Signal {data_idx_name}"
             plt.title(f"Pettitt Non-Parametric Change Points and Intervals for {data_idx_name}",
                       fontsize=16, fontweight='bold')
@@ -368,11 +368,11 @@ class PettittMethod(object):
                     color_rule = not color_rule
                     for idx in interval:
                         plt.scatter(idx, data[:,data_idx][idx], marker='X', s=100, color=color_arr[color_rule])
-                        plt.axvline(x=idx, linestyle='--', color=color_arr[color_rule])
+                        plt.axvline(x=idx, linestyle='--', color=color_arr[color_rule], zorder=2)
             else:
                 plt.scatter(self.change_points[data_idx_name],
                             data[self.change_points[data_idx_name],data_idx],
-                            marker='X', s=100, color='darkmagenta')
+                            marker='x', s=50, color='black', zorder=3)
                
             plt.show()
 
