@@ -289,8 +289,8 @@ class ExponentialWeighted(object):
             elif self._criteria == 'average':
                 plt.plot(self._mu_k_arr[:,col], zorder=1, color='coral')
             else:
-                plt.plot(self._v_k_arr[:,col],color='blue',label='Variance Plot', zorder=1, color='coral')
-                plt.plot(self._mu_k_arr[:,col],color='brown',label='Average Plot', zorder=1, color='coral')
+                plt.plot(self._v_k_arr[:,col], label='Variance Plot', zorder=1, color='coral')
+                plt.plot(self._mu_k_arr[:,col], label='Average Plot', zorder=1, color='coral')
                 plt.legend(fontsize=14)
             
             if self.df_cols is None:
