@@ -360,19 +360,9 @@ class PettittMethod(object):
             plt.xticks(fontsize=14,fontweight='bold',color='grey')
             plt.yticks(fontsize=14,fontweight='bold',color='grey')
 
-            color_rule = True
-            color_arr = ['darkmagenta','darkorange']
-           
-            if show_intervals:
-                for interval in intervals_arr:
-                    color_rule = not color_rule
-                    for idx in interval:
-                        plt.scatter(idx, data[:,data_idx][idx], marker='X', s=100, color=color_arr[color_rule])
-                        plt.axvline(x=idx, linestyle='--', color=color_arr[color_rule], zorder=2)
-            else:
-                plt.scatter(self.change_points[data_idx_name],
-                            data[self.change_points[data_idx_name],data_idx],
-                            marker='x', s=50, color='black', zorder=3)
+            plt.scatter(self.change_points[data_idx_name],
+                        data[self.change_points[data_idx_name],data_idx],
+                        marker='x', s=50, color='black', zorder=3)
                
             plt.show()
 
