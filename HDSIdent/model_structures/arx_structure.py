@@ -32,6 +32,7 @@ class ARXStructure(ModelStructure):
     def __init__(self,
                  nx,
                  ny,
+                 nk,
                  delay,
                  cc_alpha,
                  initial_intervals,
@@ -42,6 +43,7 @@ class ARXStructure(ModelStructure):
 
         self.nx = nx
         self.ny = ny
+        self.nk = nk
         self.Nb = ny+nx
         self.delay = delay
         self.cc_alpha = cc_alpha
@@ -78,11 +80,11 @@ class ARXStructure(ModelStructure):
         
         #Compute Regressor Matrix for the given segment
         arx_matrix = np.zeros((len(y_seg)-max(self.nx,self.ny),self.ny+self.nx))
-        for idx in range(max(self.nx,self.ny),len(y_seg)):
+        for idx in range(max(self.nx+self.nk,self.ny),len(y_seg)):
             #Create y component
-            arx_matrix[idx-max(self.nx,self.ny),:self.ny] = y_seg[idx-self.ny:idx][::-1].reshape(1,-1)
+            arx_matrix[idx-max(self.nx+self.nk,self.ny),:self.ny] = y_seg[idx-self.ny:idx][::-1].reshape(1,-1)
             #Create X component
-            arx_matrix[idx-max(self.nx,self.ny),self.ny:] = X_seg[idx-self.nx:idx][::-1].reshape(1,-1)
+            arx_matrix[idx-max(self.nx+self.nk,self.ny),self.ny:] = X_seg[idx-self.nx-self.nk:idx-self.nk][::-1].reshape(1,-1)
 
         #Update interval variable
         self.Phi_dict['segment'+'_'+str(segment)] \
