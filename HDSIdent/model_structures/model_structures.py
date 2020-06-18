@@ -372,13 +372,8 @@ class ModelStructure(object):
         #Take Column Names
         input_idx_name, output_idx_name = self._update_index_name(input_idx, X_cols, output_idx, y_cols)
         
-        #Take the corresponding Information Matrix
-        I_mtx = self.I_dict['segment'+'_'+str(segment)] \
-                           [output_idx_name] \
-                           [input_idx_name]
-            
         #Compute the Effective Rank of the Information Matrix
-        efr = self._effective_rank(A = I_mtx,
+        efr = self._effective_rank(A = regressor_mtrx,
                                    threshold = self.sv_thr,
                                    efr_type = self.efr_type)
         
