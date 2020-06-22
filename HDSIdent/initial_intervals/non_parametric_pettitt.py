@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import math
+import copy
 from collections import defaultdict
 from joblib import Parallel, delayed
 
@@ -14,7 +15,7 @@ class PettittMethod(object):
             change-point problem. Appl. Stat. 28, 126–135]
     """
    
-    def __init__(self, alpha, min_length_to_split = 0, n_jobs=-1, verbose=0):
+    def __init__(self, alpha, min_length_to_split = 0, split_size = 200, n_jobs=-1, verbose=0):
 
         self.df_cols = None
        
@@ -24,10 +25,12 @@ class PettittMethod(object):
             self.alpha = alpha
        
         self.min_length_to_split = min_length_to_split
+        self.split_size = split_size
         self.n_jobs = n_jobs
         self.verbose = verbose
 
         #Initialize Internal Variables
+        self.initial_intervals = {}
         self.change_points = None
         self.segments = None
 
@@ -314,6 +317,28 @@ class PettittMethod(object):
                 else:
                     break
 
+    def _split_long_intervals(self, data, data_cols, data_type):
+        """
+        This function splits too long intervals according
+        to the provided value of split_size.
+        """
+        for col in range(0,data.shape[1]):
+            
+            if data_cols is None:
+                data_cols = data_type+"_"+str(col)
+    
+            divided_intervals = []
+            for value in self.segments[data_cols]:
+                if len(value) < self.split_size:
+                    divided_intervals.append(value)
+                else:
+                    divided_intervals+=list(np.array_split(np.array(value),
+                                                           math.ceil(len(value)/self.split_size)))
+                    
+            divided_intervals = [list(x) for x in divided_intervals]
+            self.initial_intervals[data_cols] = copy.deepcopy(divided_intervals)
+            
+    
     def fit(self, X=None, y=None):
         """
         """
@@ -331,13 +356,16 @@ class PettittMethod(object):
         ##Input Data
         if X is not None:
             self._find_change_points(data=X, data_cols=X_cols, data_type='input')
+            self._split_long_intervals(data=X, data_cols=X_cols, data_type='input')
+            
         ##Output Data
         if y is not None:
             self._find_change_points(data=y, data_cols=y_cols, data_type='output')
+            self._split_long_intervals(data=y, data_cols=y_cols, data_type='output')
 
-        return self.segments, self.change_points
+        return self.initial_intervals
 
-    def _plot_data(self, data, data_cols, data_type, show_intervals):
+    def _plot_data(self, data, data_cols, data_type, divided_data, show_intervals):
 
         for data_idx in range(0,data.shape[1]):
             
@@ -346,8 +374,11 @@ class PettittMethod(object):
                 data_idx_name = data_cols[data_idx]
             else:
                 data_idx_name = data_type + '_' + str(data_idx)
-
-            intervals_arr = self.segments[data_idx_name]
+            
+            if divided_data:
+                intervals_arr = self.initial_intervals[data_idx_name]
+            else:
+                intervals_arr = self.segments[data_idx_name]
            
             sns.set_style("darkgrid")
             plt.figure(figsize=(15,5))
@@ -359,14 +390,15 @@ class PettittMethod(object):
             plt.xlabel("Discrete Samples", fontsize=14, fontweight='bold')
             plt.xticks(fontsize=14,fontweight='bold',color='grey')
             plt.yticks(fontsize=14,fontweight='bold',color='grey')
-
-            plt.scatter(self.change_points[data_idx_name],
-                        data[self.change_points[data_idx_name],data_idx],
-                        marker='x', s=50, color='black', zorder=3)
+            
+            for idx in range(0, len(intervals_arr)-1):
+                plt.scatter(np.max(intervals_arr[idx]),
+                            data[np.max(intervals_arr[idx]),data_idx],
+                            marker='x', s=50, color='black', zorder=3)
                
             plt.show()
 
-    def plot_change_points(self, X=None, y=None, show_intervals=False):
+    def plot_change_points(self, X=None, y=None, divided_data=False, show_intervals=False):
         """
         Plots all found change points and its corresponding
         intervals.
@@ -384,9 +416,8 @@ class PettittMethod(object):
 
         #Plot input data
         if X is not None:
-            self._plot_data(data=X, data_cols=X_cols, data_type='input', show_intervals=show_intervals)
+            self._plot_data(data=X, data_cols=X_cols, data_type='input', divided_data=divided_data, show_intervals=show_intervals)
 
         #Plot Output Data
         if y is not None:
-            self._plot_data(data=y, data_cols=y_cols, data_type='output', show_intervals=show_intervals)
-
+            self._plot_data(data=y, data_cols=y_cols, data_type='output', divided_data=divided_data, show_intervals=show_intervals)
