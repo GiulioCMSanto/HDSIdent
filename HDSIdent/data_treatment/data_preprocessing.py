@@ -175,14 +175,11 @@ class Preprocessing(object):
         y_aux = self._remove_first_samples(data=y)
         
         #Scale Data
-        data = np.concatenate([X,y],axis=1)
-        data = scale(data)
+        data = np.concatenate([X_aux,y_aux],axis=1)
+        data = self._scale(data=data)
         
         X_aux = data[:,:X.shape[1]]
         y_aux = data[:,X.shape[1]:]
-        
-        X_aux = self._scale(data=X_aux)
-        y_aux = self._scale(data=y_aux)
         
         #Apply Lowpass Filter
         if self.W:
