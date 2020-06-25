@@ -43,40 +43,39 @@ class MIMOStatistical(object):
     
     Arguments:
         initial_intervals: the initial intervals (segmentation) for 
-        each input and output signal;
-        ks_p_value: the p-value threshold for the kolmogorov-smirnov test;
-        ts_p_value: the p-value threshold for the t-student test;
-        compare_means: whether or not perform the t-student test;
+        each input and output signals;
+        alpha: the significance level for the two-mean comparison t-student test;
+        ks_critic: the critical value factor for the Kolmogorov-Smirnov (Lilliefors) test;
+        insert_noise: whether or not to insert noise in the input signal;
+        compare_means: whether or not to perform the t-student test;
         min_input_coupling: the min number of inputs that must satify the statistical tests;
         min_output_coupling: the min number of outputs that must satisfy the statistical tests;
-        mean_crossing_percentual: The percentage over the size of an interval
-        that serves as a threshold to determine the minimum number of mean-crossings 
-        required to perform the non parametric kolmogorov-smirnov test;
-        noise_std: the noise standard deviation that is included in each segment for
-        performing the non parametric kolmogorov-smirnov test;
+        noise_std: the noise standard deviation (if inserted);
         verbose: the degree of verbosity from 0 to 10, being 0 the absence of verbose.
-        n_jobs: the number off CPU's to use.
+        n_jobs: the number of CPU's to be used.
         
     """
     def __init__(self,
                  initial_intervals,
-                 ks_p_value=1e-20,
-                 ts_p_value=1e-50,
+                 alpha=0.01,
+                 ks_critic = 1.25,
+                 mean_delta = 0.05,
+                 insert_noise = True,
                  compare_means=True,
                  min_input_coupling=1,
                  min_output_coupling=1,
-                 mean_crossing_percentual=0.5,
-                 noise_std=0.05,
+                 noise_std=0.01,
                  verbose=0,
                  n_jobs=-1):
         
         self.initial_intervals = initial_intervals
-        self.ks_p_value = ks_p_value
-        self.ts_p_value = ts_p_value
+        self.ks_critic = ks_critic
+        self.alpha = alpha
+        self.mean_delta = mean_delta
+        self.insert_noise = insert_noise
         self.compare_means = compare_means
         self.min_input_coupling = min_input_coupling
         self.min_output_coupling = min_output_coupling
-        self.mean_crossing_percentual = mean_crossing_percentual
         self.noise_std = noise_std
         self.verbose = verbose
         self.n_jobs=n_jobs
@@ -122,6 +121,45 @@ class MIMOStatistical(object):
             
         return X, y, X_cols, y_cols
     
+    def _initialize_internal_variables(self):
+        """
+        This function initializes the following variables:
+            - data_segments_dict: a dictionary with the data segments
+            corresponding to the provided initial intervals;
+            - ks_value_dict: a dictionary where the keys are the
+            input/output signals and the values are the results
+            from the lilliefors test for each segment (result values
+            can be either 1 or 0);
+            - ks_segments_indexes: the indexes of the segments where
+            the lilliefors test successeded (i.e., returned 1);
+            - ts_values_dict: a dictionary where the keys are the
+            input/output signals and the values are the results
+            from the t-student test for each segment (result values
+            can be either 1 or 0);
+            - sequential_indicating_sequences: the corresponding segments 
+            where an indicating sequence contains consecutive values of 1;
+            - global_sequential_indicating_sequence: the unified segments
+            for all the input and output signals;
+            - ks_indicating_sequences: the indicating sequences resulted
+            from the lilliefors (Kolmogorov-Smirnov) test;
+            - ts_indicating_sequences: the indicating sequences resulted
+            from the t-student (two-mean comparison) test;
+            - unified_indicating_sequence: the unified indicating sequence
+            considering both ks_indicating_sequences and ts_indicating_sequences
+            and considering all the input and output signals.
+        """
+        #Internal Variables
+        self.data_segments_dict = defaultdict(dict)
+        self.ks_values_dict = defaultdict(dict)
+        self.ks_segments_indexes = defaultdict(dict)
+        self.ts_values_dict = defaultdict(dict)
+        self.sequential_indicating_sequences = defaultdict(dict)
+        self.global_sequential_indicating_sequence = None
+        self.ks_indicating_sequences = None
+        self.ts_indicating_sequences = None
+        self.unified_indicating_sequence = None
+        
+        
     def _initialize_indicating_sequences(self, X, X_cols, y, y_cols):
         """
         This function initializes the indicating sequences. An
@@ -224,13 +262,12 @@ class MIMOStatistical(object):
 
         if mean_crossing_idx_arr.size >= 2:
             Tc = mean_crossing_idx_arr[1:] - mean_crossing_idx_arr[:-1]
-            Tc = np.unique(Tc, return_counts=True)[1]
         else:
             Tc = None
 
         return Tc
 
-    def _kolmogorov_smirnov_test(self, Tc, num_mean_crossings, min_num_mean_crossings):
+    def _kolmogorov_smirnov_test(self, Tc):
         """
         Computs a non-parametric Kolmogorov-Smirnov statistical
         test to check if the mean crossing statistic follows
@@ -243,28 +280,51 @@ class MIMOStatistical(object):
         Arguments:
             Tc: the mean crossing statistic.
             num_mean_crossings: the number of mean crossing experienced
-            by the data segment.
-            min_num_mean_crossings: the minimum number of mean crossings
-            ir order to perfor the kolmogorov_smirnov teste. If the data
-            segment has no mean crossing, it means it is constantly increasing
-            or decreasing.
         
         Output:
-            p_value: the Kolmogorov-Smirnov test p_value. If the p_value
-            is lower then a given statistical significance level, then
-            one can reject the null hypothesis that assumes Tc follows an
-            exponential distribution.
+            lill_result: the Kolmogorov-Smirnov test result. If 1, the 
+            Tc samples was able to reject the null hypothesis of 
+            exponential distribution. If 0, the null hypothesis could not
+            be rejected.
         """
 
-        if Tc is not None:
-            if num_mean_crossings > min_num_mean_crossings:
-                p_value = stats.kstest(Tc, cdf = 'expon', alternative = 'two-sided')[1]
-            else:
-                p_value = 0
-        else:
-            p_value = 0
+        #Array for simulated Tc
+        T_arr = range(0,60)
 
-        return p_value
+        #Estimated CDF
+        f_hat = []
+
+        #Interval Exponential Average
+        lamb = 1/np.mean(Tc)
+
+        #Theoretical CDF
+        Ft = 1-np.exp(-lamb*T_arr)
+
+        #Computed CDF
+        for t in T_arr:
+            a = []
+            for tc in Tc:
+                if tc <= t:
+                    a.append(1)
+                else:
+                    a.append(0)
+            f_hat.append(np.mean(a))
+
+        #Lilliefors Computed Value
+        Dt = np.max(np.abs(Ft-f_hat))
+        
+        #Compare with Critical Value
+        if len(Tc) < 30:
+            Dc = self.ks_critic/np.sqrt(len(Tc)-1)
+        else:
+            Dc = 2.5/np.sqrt(len(Tc)-1)
+
+        if Dt < Dc:
+            lill_result = 0
+        else:
+            lill_result = 1
+        
+        return lill_result
     
     def _magnitude_changes_test(self, data_segment):
         """
@@ -276,29 +336,28 @@ class MIMOStatistical(object):
             data_segment: a data segment.
         
         Output:
-            p_value: the Kolmogorov-Smirnov test p_value. If the p_value
-            is lower then a given statistical significance level, then
-            one can reject the null hypothesis that assumes Tc follows an
-            exponential distribution.   
+            lill_result: the Kolmogorov-Smirnov test result. If 1, the 
+            Tc samples was able to reject the null hypothesis of 
+            exponential distribution. If 0, the null hypothesis could not
+            be rejected.   
         """
-        
-        #Insert Noise
-        data_noise = self._insert_random_noise(data_segment=data_segment,
-                                               noise_mean=0,
-                                               noise_std=self.noise_std)
 
         #Fid Mean Crossing Indexes
-        mean_crossing_idx_arr = self._find_mean_crossing_indexes(data_segment=data_noise)
+        mean_crossing_idx_arr = self._find_mean_crossing_indexes(data_segment=data_segment)
         
         #Create Mean Crossing Statistic
         Tc = self._create_mean_crossing_statistic(mean_crossing_idx_arr=mean_crossing_idx_arr)
-
-        #Compute Kolmogorov-Smirnov Statistical Test
-        p_value = self._kolmogorov_smirnov_test(Tc=Tc,
-                                                num_mean_crossings=len(mean_crossing_idx_arr),
-                                                min_num_mean_crossings=self.mean_crossing_percentual*len(data_segment))
-
-        return p_value
+        
+        try: #If fails, Tc is Null
+            if len(Tc) > 3:
+                #Compute Kolmogorov-Smirnov (Lilliefors) Statistical Test
+                lill_result = self._kolmogorov_smirnov_test(Tc=Tc)
+            else:
+                lill_result = 1
+        except: #If Tc is Null, only one mean-crossing was found in the data
+            lill_result = 1
+            
+        return lill_result
     
     def _fit_magnitude_changes(self, data, data_cols, data_type):
         """
@@ -321,15 +380,15 @@ class MIMOStatistical(object):
             else:
                 data_idx_name = data_type+'_'+str(col_idx)
             
-            #Perform Kolmogorov-Smirnov Test
-            magnitude_change_task = (delayed(self._magnitude_changes_test)(data[segment, col_idx])
-                                     for segment in self.data_segments_dict[data_type][data_idx_name])
-
-            self.ks_p_values_dict[data_type][data_idx_name] = list(executor(magnitude_change_task))
+            #Perform Kolmogorov-Smirnov (Lilliefors) Test
+            self.ks_values_dict[data_type][data_idx_name] = []
+            for segment in self.data_segments_dict[data_type][data_idx_name]:
+                self.ks_values_dict[data_type][data_idx_name].\
+                    append(self._magnitude_changes_test(data[segment, col_idx]))
             
             #Take Segment Indexes that Satifies the Hypothesis Test
             self.ks_segments_indexes[data_type][data_idx_name] = \
-                np.squeeze(np.argwhere(np.array(self.ks_p_values_dict[data_type][data_idx_name]) < self.ks_p_value))
+                np.squeeze(np.argwhere(np.array(self.ks_values_dict[data_type][data_idx_name]) == 1))
             
             #Update Indicating Sequences
             try:
@@ -348,14 +407,14 @@ class MIMOStatistical(object):
     def _difference_in_mean_test(self, data, segment_idx, data_type, data_idx_name, col_idx):
         """
         This function compares two consecutive intervals and test if they
-        have a difference in mean. The null hypothesis is that both signals
-        have the same mean value. The indicating sequence of
-        each signal is updated case a particular segment meet the test
-        specifications.
+        have a mean_delta difference in mean. The null hypothesis is that 
+        the mean difference is lower or equal mean_delta. The indicating 
+        sequence of each signal is updated case a particular segment meet 
+        the test specifications.
         
         A t-student with unknown mean and variance is performed to compare
         the intervals and the resulting p-value is compared to the provided
-        significance threshold (ts_p_value).
+        significance threshold (alpha).
         
         Arguments:
             data: a data matrix (either input or output data).
@@ -369,16 +428,29 @@ class MIMOStatistical(object):
         interval_1 = data[self.data_segments_dict[data_type][data_idx_name][segment_idx],col_idx]
         interval_2 = data[self.data_segments_dict[data_type][data_idx_name][segment_idx+1],col_idx]
         
-        #Perform t-student test
-        p_value = stats.ttest_ind(interval_1, interval_2, equal_var = False)[1]
+        #Compute mean of intervals
+        mean_1 = np.mean(interval_1)
+        mean_2 = np.mean(interval_2)
         
-        #Compare p-value agains threshold
-        if p_value < self.ts_p_value:
+        #Compute degrees of freedom
+        w1 = (np.var(interval_1)**2)/len(interval_1)
+        w2 = (np.var(interval_2)**2)/len(interval_2)
+        
+        df = ((w1+w2)**2)/(((w1**2)/(len(interval_1)+1))+\
+                           ((w2**2)/(len(interval_2)+1))) - 2
+        
+        #Perform t-student test for unknown mean and variance
+        tcalc = (np.abs(mean_1-mean_2)-self.mean_delta)/(np.sqrt(((np.var(interval_1)**2)/len(interval_1) + 
+                                                        (np.var(interval_2)**2)/len(interval_2))))
+        
+        if tcalc > t.ppf(1-self.alpha/2, df=df):
             data_signal_indexes = np.array(self.data_segments_dict[data_type][data_idx_name])
             true_data_indexes = data_signal_indexes[segment_idx+1]
-            self.indicating_sequences[data_type][data_idx_name][true_data_indexes] = 1.
-            
-        return p_value
+            self.indicating_sequences[data_type][data_idx_name][true_data_indexes] = 1.0
+            return tcalc
+        else:
+            return tcalc
+        
     
     def _fit_difference_in_mean(self, data, data_cols, data_type):
         """
@@ -414,7 +486,7 @@ class MIMOStatistical(object):
                                        for segment_idx in range(0,len(self.data_segments_dict[data_type] \
                                                                                              [data_idx_name])-1))
             
-            self.ts_p_values_dict[data_type][data_idx_name] = list(executor(difference_in_mean_task))
+            self.ts_values_dict[data_type][data_idx_name] = list(executor(difference_in_mean_task))
         
     def _create_segments_dict(self, data, data_cols, data_type):
         """
@@ -426,8 +498,14 @@ class MIMOStatistical(object):
             data_cols: the columns names of the data matrix
             data_type: the data type (input or output)
         """
-        for col in data_cols:
-            self.data_segments_dict[data_type][col] = self.initial_intervals[col]  
+        for col in range(0,data.shape[1]):
+            
+            if data_cols is None:
+                data_idx_name = data_type+"_"+str(col)
+            else:
+                data_idx_name = data_cols[col]
+                
+            self.data_segments_dict[data_type][data_idx_name] = self.initial_intervals[data_idx_name]  
     
     def _unify_indicating_sequences(self):
         """
@@ -583,19 +661,17 @@ class MIMOStatistical(object):
             y: the output signal matrix. Each column corresponds to an
             output signal.
         """
-        #Internal Variables
-        self.data_segments_dict = defaultdict(dict)
-        self.ks_p_values_dict = defaultdict(dict)
-        self.ks_segments_indexes = defaultdict(dict)
-        self.ts_p_values_dict = defaultdict(dict)
-        self.sequential_indicating_sequences = defaultdict(dict)
-        self.global_sequential_indicating_sequence = None
-        self.ks_indicating_sequences = None
-        self.ts_indicating_sequences = None
-        self.unified_indicating_sequence = None
+        
+        #Initialize Interval Variables
+        self._initialize_internal_variables()
         
         #Verify data format
         X, y, X_cols, y_cols = self._verify_data(X,y)
+        
+        #Insert Noise
+        X = self._insert_random_noise(data_segment=X,
+                                      noise_mean=0,
+                                      noise_std=self.noise_std)
         
         #Initialize Indicating Sequences
         self._initialize_indicating_sequences(X=X, X_cols=X_cols, y=y, y_cols=y_cols)
@@ -603,7 +679,7 @@ class MIMOStatistical(object):
         #Create Segments Dict
         self._create_segments_dict(data=X, data_cols=X_cols, data_type='input')
         self._create_segments_dict(data=y, data_cols=y_cols, data_type='output')
-    
+        
         #Magnitude Change Test
         self._fit_magnitude_changes(data=X, data_cols=X_cols, data_type='input')
         self._fit_magnitude_changes(data=y, data_cols=y_cols, data_type='output')

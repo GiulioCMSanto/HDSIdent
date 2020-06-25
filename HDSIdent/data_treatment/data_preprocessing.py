@@ -22,7 +22,7 @@ class Preprocessing(object):
         N: Butterworth filter order
         Ts: the sampling frequency of the digital filter (Default = 1.0 seconds)
     """
-    def __init__(self, scaler='StandardScaler', feature_range = (0,1), k=10, W=0.05, N=1, Ts=1):
+    def __init__(self, scaler='StandardScaler', feature_range = (0,1), k=10, W=None, N=1, Ts=1):
             
         self.scaler = scaler
         self.feature_range = feature_range
@@ -185,8 +185,9 @@ class Preprocessing(object):
         y_aux = self._scale(data=y_aux)
         
         #Apply Lowpass Filter
-        X_aux = self._lowpass_filter(data=X_aux)
-        y_aux = self._lowpass_filter(data=y_aux)
+        if self.W:
+            X_aux = self._lowpass_filter(data=X_aux)
+            y_aux = self._lowpass_filter(data=y_aux)
         
         #Create Dataframe
         if X_cols is not None:
