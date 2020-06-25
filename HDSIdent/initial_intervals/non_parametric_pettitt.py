@@ -322,13 +322,16 @@ class PettittMethod(object):
         This function splits too long intervals according
         to the provided value of split_size.
         """
-        for col in range(0,data.shape[1]):
+        for col_idx in range(0,data.shape[1]):
             
             if data_cols is None:
-                data_cols = data_type+"_"+str(col)
+                data_idx_name = data_type+"_"+str(col_idx)
+            else:
+                data_idx_name = data_cols[col_idx]
+
     
             divided_intervals = []
-            for value in self.segments[data_cols]:
+            for value in self.segments[data_idx_name]:
                 if len(value) < self.split_size:
                     divided_intervals.append(value)
                 else:
@@ -336,7 +339,7 @@ class PettittMethod(object):
                                                            math.ceil(len(value)/self.split_size)))
                     
             divided_intervals = [list(x) for x in divided_intervals]
-            self.initial_intervals[data_cols] = copy.deepcopy(divided_intervals)
+            self.initial_intervals[data_idx_name] = copy.deepcopy(divided_intervals)
             
     
     def fit(self, X=None, y=None):
