@@ -128,15 +128,19 @@ class LaguerreStructure(ModelStructure):
         Phi = np.zeros((len(X_seg)-1, self.Nb))
         
         for order in range(1,self.Nb+1):
+            #Include initial values to avoid deflection
+            X_seg_aux = np.array([X_seg[0]]*10000 + list(X_seg))
+
             #Compute the Laguerre Filter Transfer Function
             L_tf = self._laguerre_filter_tf(order=order)
 
             #Simulate Laguerre Filter for Signal of Column col 
             _, X_out = signal.dlsim(system=L_tf,
-                                    u=X_seg,
-                                    t=range(len(X_seg)))
+                                    u=X_seg_aux,
+                                    t=range(len(X_seg_aux)),
+                                    x0=X_seg[0])
 
-            Phi[:,order-1] = np.squeeze(X_out[1:])   
+            Phi[:,order-1] = np.squeeze(X_out[10001:])   
         
         #Update interval variable
         self.Phi_dict['segment'+'_'+str(segment)] \

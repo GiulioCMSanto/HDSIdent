@@ -5,13 +5,6 @@ from copy import deepcopy
 import pandas as pd
 import numpy as np
 
-from joblib import Parallel, delayed
-from collections import defaultdict
-from scipy import stats
-from copy import deepcopy
-import pandas as pd
-import numpy as np
-
 class MIMOStatistical(object):
     """
     This class performs a multivariable signal segmentation
@@ -443,7 +436,7 @@ class MIMOStatistical(object):
         tcalc = (np.abs(mean_1-mean_2)-self.mean_delta)/(np.sqrt(((np.var(interval_1)**2)/len(interval_1) + 
                                                         (np.var(interval_2)**2)/len(interval_2))))
         
-        if tcalc > t.ppf(1-self.alpha/2, df=df):
+        if tcalc > stats.t.ppf(1-self.alpha/2, df=df):
             data_signal_indexes = np.array(self.data_segments_dict[data_type][data_idx_name])
             true_data_indexes = data_signal_indexes[segment_idx+1]
             self.indicating_sequences[data_type][data_idx_name][true_data_indexes] = 1.0
