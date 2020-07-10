@@ -34,6 +34,7 @@ class ExponentialWeighted(object):
                  min_input_coupling=1,
                  min_output_coupling=1,
                  num_previous_indexes=0,
+                 min_interval_length=None,
                  n_jobs=-1, 
                  verbose=0):
 
@@ -45,6 +46,7 @@ class ExponentialWeighted(object):
         self.min_input_coupling = min_input_coupling
         self.min_output_coupling = min_output_coupling
         self.num_previous_indexes = num_previous_indexes
+        self.min_interval_length = min_interval_length
         self.n_jobs = n_jobs
         self.verbose = verbose
         
@@ -106,16 +108,14 @@ class ExponentialWeighted(object):
         
         self._mu_k_1 = np.mean(X[:100,:],axis=0)
         self._v_k_1 = np.var(X[:100,:],axis=0)
-
-        self.df_cols = None
         
-        if not self.sigma:
+        if self.sigma is None:
             self.sigma = np.std(X,axis=0)
         
-        if not self.H_u:
+        if self.H_u is None:
             self.H_u = 5*self.sigma
             
-        if not self.H_v:
+        if self.H_v is None:
             self.H_v = 5*self.sigma
 
         if type(self.H_u) == list:
@@ -395,6 +395,21 @@ class ExponentialWeighted(object):
         
         return final_segment_indexes 
     
+    def _length_check(self):
+        """
+        This function checks the interval length
+        according to the provided min_interval_length.
+        Only intervals with length >= min_interval_length
+        are returned.
+        """
+        final_intervals = {}
+
+        for key, value in self.unified_intervals.items():
+            if len(value) >= self.min_interval_length:
+                final_intervals[key] = value
+        
+        return final_intervals
+
     def fit(self, X, y):
         """
         This function performs the following routines:
@@ -448,24 +463,37 @@ class ExponentialWeighted(object):
         
         self.unified_intervals = dict(zip(range(0,len(final_segment_indexes)),
                                           final_segment_indexes))
-            
+        
+        #Length Check
+        if ((self.min_interval_length is not None) and 
+            (self.min_interval_length > 1)):
+            self.unified_intervals = self._length_check()
+
         return self.unified_intervals
             
-    def plot_change_points(self):
+    def plot_change_points(self, X, y):
         """
         Plots all found change points and its corresponding
         intervals.
         """
-        if (self._mu_k_arr is None) or (self._v_k_arr is None):
-            self._mu_k_arr, self._v_k_arr = self.recursive_exponential_moving_average_and_variance()
+        #Verify data format
+        X, y, X_cols, y_cols = self._verify_data(X,y)
         
-        if not self.intervals:
-            intervals = self.change_points()
-        else:
-            intervals = self.intervals
+        #Create Matrix
+        data = np.concatenate([X,y],axis=1)
+        df_cols = None
+
+        if X_cols is not None and y_cols is not None:
+            df_cols = list(X_cols)+list(y_cols)
+
+        #Check if fit is needed
+        try:
+            self.intervals
+        except:
+            self.fit(X=X, y=y)
         
-        for col in list(intervals.keys()):
-            intervals_arr = intervals[col]
+        for col in list(self.intervals.keys()):
+            intervals_arr = self.intervals[col]
             
             sns.set_style("darkgrid")
             plt.figure(figsize=(15,5))
@@ -478,10 +506,11 @@ class ExponentialWeighted(object):
                 plt.plot(self._mu_k_arr[:,col], label='Average Plot', zorder=1, color='coral')
                 plt.legend(fontsize=14)
             
-            if self.df_cols is None:
+            if df_cols is None:
                 col_name = f"Signal {col}"
             else:
-                col_name = f"Signal {self.df_cols[col]}"
+                col_name = f"Signal {df_cols[col]}"
+
             plt.title(f"Moving Average Change Points and Intervals for {col_name}", fontsize=18, fontweight='bold')
             plt.ylabel("Signal Amplitude", fontsize=18, fontweight='bold')
             plt.xlabel("Discrete Samples", fontsize=18, fontweight='bold')
