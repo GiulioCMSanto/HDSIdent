@@ -341,14 +341,14 @@ class ExponentialWeighted(object):
             
             labeled_intervals['input'][input_idx_name] = self.intervals[input_idx]
             
-        for output_idx in range(X.shape[1],X.shape[1]+y.shape[1]):
+        for output_idx in range(0, y.shape[1]):
             
             if y_cols is not None:
                 output_idx_name = y_cols[output_idx]
             else:
                 output_idx_name = 'output'+'_'+str(output_idx)
             
-            labeled_intervals['output'][output_idx_name] = self.intervals[output_idx]
+            labeled_intervals['output'][output_idx_name] = self.intervals[X.shape[1]+output_idx]
         
         return labeled_intervals
             
@@ -427,10 +427,11 @@ class ExponentialWeighted(object):
             self._extend_previous_indexes()
         
         #Make labeled intervals
-        labeled_intervals = self._label_intervals_with_input_output(X=X, 
-                                                                    X_cols=X_cols, 
-                                                                    y=y, 
-                                                                    y_cols=y_cols)
+        self.labeled_intervals = self._label_intervals_with_input_output(
+                                                X=X, 
+                                                X_cols=X_cols, 
+                                                y=y, 
+                                                y_cols=y_cols)
         
         #Create Indicating Sequence
         indicating_sequence = self._create_indicating_sequence(X=data)
@@ -442,7 +443,7 @@ class ExponentialWeighted(object):
         
         
         #Find intervals that respect min_input_coupling and min_output_coupling
-        final_segment_indexes = self._get_final_intervals(labeled_intervals=labeled_intervals, 
+        final_segment_indexes = self._get_final_intervals(labeled_intervals=self.labeled_intervals, 
                                                           global_sequence=global_sequence)
         
         self.unified_intervals = dict(zip(range(0,len(final_segment_indexes)),
