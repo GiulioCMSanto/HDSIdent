@@ -574,7 +574,7 @@ class MIMOStatistical(object):
         [0,0,1,1,1,1,0,0,0,1,1,0,0,0] would result in two sequential
         sequences:
         
-        1) Sequence formed by indexes [1,2,3,5]
+        1) Sequence formed by indexes [2,3,4,5]
         2) Sequence forme by indexes [9,10]
         
         Arguments:

@@ -25,21 +25,26 @@ class ExponentialWeighted(object):
         verbose: verbose level as in joblib library
         n_jobs: the number of threads as in joblib library
     """
-    def __init__(self, X, forgetting_fact_v, forgetting_fact_u, sigma = None, H_u=None, H_v = None, n_jobs=-1, verbose=0):
+    def __init__(self,
+                 forgetting_fact_v, 
+                 forgetting_fact_u, 
+                 sigma = None, 
+                 H_u=None, 
+                 H_v = None, 
+                 min_input_coupling=1,
+                 min_output_coupling=1,
+                 num_previous_indexes=0,
+                 n_jobs=-1, 
+                 verbose=0):
 
         self.forgetting_fact_v = forgetting_fact_v
         self.forgetting_fact_u = forgetting_fact_u
         self.df_cols = None
+        self.min_input_coupling = min_input_coupling
+        self.min_output_coupling = min_output_coupling
+        self.num_previous_indexes = num_previous_indexes
         self.n_jobs = n_jobs
         self.verbose = verbose
-
-        if type(X) == pd.core.frame.DataFrame:
-            self.X = X.values
-            self.df_cols = X.columns
-        elif type(X) == np.ndarray:
-            self.X = X
-        else:
-            raise Exception("Input data must be a pandas dataframe or a numpy array") 
             
         if not sigma:
             self.sigma = np.std(X,axis=0)
@@ -56,7 +61,48 @@ class ExponentialWeighted(object):
         else:
             self.H_v = H_v
         
-    def _initialize_internal_variables(self):
+    def _verify_data(self,X,y):
+        """
+        Verifies the data type and save data columns
+        in case they are provided.
+        
+        Arguments:
+            X: the input data in pandas dataframe format or numpy array
+            y: the output data in pandas dataframe format or numpy array
+        
+        Output:
+            X: the input data in numpy array format
+            y: the input data in numpy array format
+            X_cols: the input data columns in case they are provided
+            y_cols: the output data columns in case they are provided
+        """
+        if type(X) == pd.core.frame.DataFrame:
+            X_cols = X.columns
+            X = X.values
+            if X.ndim == 1:
+                X = X.reshape(-1,1)
+        elif type(X) == np.ndarray:
+            X_cols = None
+            if X.ndim == 1:
+                X = X.reshape(-1,1)
+        else:
+            raise Exception("Input data must be a pandas dataframe or a numpy array") 
+
+        if type(y) == pd.core.frame.DataFrame:
+            y_cols = y.columns
+            y = y.values
+            if y.ndim == 1:
+                y = y.reshape(-1,1)
+        elif type(y) == np.ndarray:
+            y_cols = None
+            if y.ndim == 1:
+                y = y.reshape(-1,1)
+        else:
+            raise Exception("Input data must be a pandas dataframe or a numpy array") 
+            
+        return X, y, X_cols, y_cols
+    
+    def _initialize_internal_variables(self, X):
         """
         This function initializes the interval variables.
         """
@@ -66,13 +112,13 @@ class ExponentialWeighted(object):
         self._v_k_arr = None
         self._mu_k = np.array([])
         self._v_k = np.array([])
-        self._is_interval = [False]*self.X.shape[1]
-        self._init_idx = [0]*self.X.shape[1]
-        self._final_idx = [0]*self.X.shape[1]
+        self._is_interval = [False]*X.shape[1]
+        self._init_idx = [0]*X.shape[1]
+        self._final_idx = [0]*X.shape[1]
         self._criteria = None
         
-        self._mu_k_1 = np.mean(self.X[:100,:],axis=0)
-        self._v_k_1 = np.var(self.X[:100,:],axis=0)
+        self._mu_k_1 = np.mean(X[:100,:],axis=0)
+        self._v_k_1 = np.var(X[:100,:],axis=0)
 
         
     def _exponential_moving_average_and_variance(self, X, idx):
@@ -98,7 +144,7 @@ class ExponentialWeighted(object):
         
         return (self._mu_k, self._v_k)
     
-    def _search_for_change_points(self, idx, col, criteria):
+    def _search_for_change_points(self, X, idx, col, criteria):
         """
         Searchs for change points in the filtered data.
         
@@ -126,16 +172,16 @@ class ExponentialWeighted(object):
             if not self._is_interval[col]:
                 self._init_idx[col] = idx
                 self._is_interval[col] = True
-            elif idx == len(self.X)-1 and self._is_interval[col]:
+            elif idx == len(X)-1 and self._is_interval[col]:
                 self._is_interval[col] = False
                 self._final_idx[col] = idx
-                self.intervals[col].append([self._init_idx[col], self._final_idx[col]])    
+                self.intervals[col].append([self._init_idx[col], self._final_idx[col]]) 
         elif self._is_interval[col]:
             self._is_interval[col] = False
             self._final_idx[col] = idx
             self.intervals[col].append([self._init_idx[col], self._final_idx[col]])
         
-    def recursive_exponential_moving_average_and_variance(self):
+    def recursive_exponential_moving_average_and_variance(self, X):
         """
         Performs a recursive moving average/variance algorithm from past samples
         using a multithread approach.
@@ -144,7 +190,6 @@ class ExponentialWeighted(object):
             self._mu_k_arr: the average filtered data for the given index
             self._v_k_arr: the variance filtered data for the given index
         """
-        X = self.X
         results = list(Parallel(n_jobs=self.n_jobs,
                                 require='sharedmem',
                                 verbose=self.verbose)(delayed(self._exponential_moving_average_and_variance)(X, idx)
@@ -156,7 +201,7 @@ class ExponentialWeighted(object):
         
         return self._mu_k_arr, self._v_k_arr
     
-    def change_points(self, criteria='variance'):
+    def change_points(self, X, criteria='variance'):
         """
         Searchs for change points in the filtered data and its
         corresponding intervals using a multithread approach.
@@ -172,22 +217,45 @@ class ExponentialWeighted(object):
         self._criteria = criteria
         
         if (self._mu_k_arr is None) or (self._v_k_arr is None):
-            self._mu_k_arr, self._v_k_arr = self.recursive_exponential_moving_average_and_variance()
+            self.recursive_exponential_moving_average_and_variance()
             
         Parallel(n_jobs=self.n_jobs,
                  require='sharedmem',
-                 verbose=self.verbose)(delayed(self._search_for_change_points)(idx,col,criteria)
-                                       for idx in range(len(self.X))
-                                       for col in range(self.X.shape[1]))
+                 verbose=self.verbose)(delayed(self._search_for_change_points)(X,idx,col,criteria)
+                                       for idx in range(len(X))
+                                       for col in range(X.shape[1]))
         
-        self._is_interval = [False]*self.X.shape[1]
-        self._init_idx = [0]*self.X.shape[1]
-        self._final_idx = [0]*self.X.shape[1]
+        self._is_interval = [False]*X.shape[1]
+        self._init_idx = [0]*X.shape[1]
+        self._final_idx = [0]*X.shape[1]
         
         return self.intervals
 
-    
-    def _create_indicating_sequence(self):
+    def _extend_previous_indexes(self):
+        """
+        This function allows an extension of each interval
+        with previous index values. The number of indexes 
+        extended are provided in num_previous_indexes.
+        """
+        for key, interval_arr in self.intervals.items():
+            for idx, interval in enumerate(interval_arr):
+                
+                min_val = np.min(interval)
+                
+                if ((idx == 0) and 
+                    (np.min(interval)-self.num_previous_indexes < 0)
+                   ):
+                    min_val = 0
+                elif ((idx > 0) and 
+                      ((np.min(interval)-self.num_previous_indexes) <= np.max(interval_arr[idx-1]))
+                     ):
+                    min_val = np.max(interval_arr[idx-1])+1
+                else:
+                    min_val = np.min(interval)-self.num_previous_indexes
+
+                self.intervals[key][idx] = [min_val, np.max(interval)]
+            
+    def _create_indicating_sequence(self, X):
         """
         This function creates an indicating sequence, i.e., an array containing 1's
         in the intervals of interest and 0's otherwise, based on each interval obtained
@@ -196,47 +264,136 @@ class ExponentialWeighted(object):
         Output:
             indicating_sequence: the indicating sequence
         """
-        indicating_sequence = np.zeros(self.X.shape[0])
+        indicating_sequence = np.zeros(X.shape[0])
         for _, interval_arr in self.intervals.items():
             for interval in interval_arr:
                 indicating_sequence[interval[0]:interval[1]+1] = 1
                 
         return indicating_sequence
-
-    def _define_intervals_from_indicating_sequence(self,indicating_sequence):
-        """
-        Receives an indicating sequence, i.e., an array containing 1's
-        in the intervals of interest and 0's otherwise, and create a
-        dictionary with the intervals indexes.
-
-        Arguments:
-            indicating_sequence: an array containing 1's in the intervals of
-            interest and 0's otherwise.
-
-        Output:
-            sequences_dict: a dictionary with the sequences indexes
-        """
-        is_interval = False
-        interval_idx = -1
-
-        sequences_dict = defaultdict(list)
-        for idx, value in enumerate(indicating_sequence):
-            if idx == 0 and value == 1:
-                is_interval = True
-                interval_idx += 1
-            elif idx > 0:
-                if value == 1 and indicating_sequence[idx-1] == 0 and not is_interval:
-                    is_interval = True
-                    interval_idx += 1
-                elif value == 0 and indicating_sequence[idx-1] == 1 and is_interval:
-                    is_interval = False
-
-            if is_interval:
-                sequences_dict[interval_idx].append(idx)
-
-        return sequences_dict
     
-    def fit(self):
+    def _create_sequential_indicating_sequences(self, indicating_sequence):
+        """
+        This function gets the indicating sequence for a given data
+        and creates the corresponding segments where the sequence 
+        contains consecutive values of 1. For example, the sequence
+        [0,0,1,1,1,1,0,0,0,1,1,0,0,0] would result in two sequential
+        sequences:
+        
+        1) Sequence formed by indexes [2,3,4,5]
+        2) Sequence forme by indexes [9,10]
+        
+        Arguments:
+            indicating_sequence: the data indicating sequence.
+        
+        Output:
+            sequential_indicating_sequences: the sequential indicating sequence.
+        """
+        
+        is_interval = False
+        sequential_indicating_sequences = []
+        aux_arr = []
+        
+        for idx in range(len(indicating_sequence)):
+
+            if not is_interval and indicating_sequence[idx] == 1:
+                is_interval = True
+
+            if is_interval and indicating_sequence[idx] == 1:
+                aux_arr.append(idx)
+
+            if idx < len(indicating_sequence)-1:
+                if (is_interval 
+                    and indicating_sequence[idx] == 1
+                    and indicating_sequence[idx+1] == 0):
+
+                    is_interval = False
+                    sequential_indicating_sequences.append(aux_arr)
+                    aux_arr = []
+            else:
+                if aux_arr != []:
+                    sequential_indicating_sequences.append(aux_arr)
+                    
+        return sequential_indicating_sequences
+    
+    def _label_intervals_with_input_output(self, X, X_cols, y, y_cols):
+        """
+        This function labels the intervals dictionary keys to discriminate
+        the input and output variables. This is crucial to garantee the
+        min_input_coupling and min_output_coupling conditions.
+        
+        Arguments:
+            X: the input matrix. Each column corresponds to an input signal
+            X_cols: the input signals column names
+            y: the output matrix: Each column corresponds to an ouput signal
+            y_cols: the output signals column names
+        """
+        
+        labeled_intervals = defaultdict(dict)
+        
+        for input_idx in range(0,X.shape[1]):
+            
+            if X_cols is not None:
+                input_idx_name = X_cols[input_idx]
+            else:
+                input_idx_name = 'input'+'_'+str(input_idx)
+            
+            labeled_intervals['input'][input_idx_name] = self.intervals[input_idx]
+            
+        for output_idx in range(X.shape[1],X.shape[1]+y.shape[1]):
+            
+            if y_cols is not None:
+                output_idx_name = y_cols[output_idx]
+            else:
+                output_idx_name = 'output'+'_'+str(output_idx)
+            
+            labeled_intervals['output'][output_idx_name] = self.intervals[output_idx]
+        
+        return labeled_intervals
+            
+    def _get_final_intervals(self, labeled_intervals, global_sequence):
+        """
+        This function takes the global indicating sequences, i.e., the unified
+        indicating sequence for all input and output signals and verfies if
+        there is at least one input and one output valid indicating sequence inside
+        each global indicating sequence.
+        
+        Arguments:
+            global_sequence: the unified intervals for all input and output signals.
+            labeled_intervals: the individual intervals for each input and output.
+        """
+        
+        final_segment_indexes = []
+        
+        for segment_idx_arr in global_sequence:
+            
+            #Check if at least one input indicating sequence is in the correspondig global sequence
+            input_count = 0
+            for input_name in labeled_intervals['input'].keys():
+                input_aux_count = 0
+                for input_sequence in labeled_intervals['input'][input_name]:
+                    if all(elem in segment_idx_arr for elem in input_sequence):
+                        input_aux_count+=1
+                if input_aux_count > 0:
+                    input_count += 1
+                    
+            #Check if at least one output indicating sequence is in the correspondig global sequence
+            output_count = 0
+            for output_name in labeled_intervals['output'].keys():
+                output_aux_count = 0
+                for output_sequence in labeled_intervals['output'][output_name]:
+                    if all(elem in segment_idx_arr for elem in output_sequence):
+                        output_aux_count+=1
+                if output_aux_count > 0:
+                    output_count += 1
+
+            if (input_count >= self.min_input_coupling and 
+                output_count >= self.min_output_coupling):
+                
+                final_segment_indexes.append(segment_idx_arr)
+        
+        return final_segment_indexes 
+    
+    def fit(self, X, y):
         """
         This function performs the following routines:
             - Applies the recursive exponential moving average/variance
@@ -248,21 +405,46 @@ class ExponentialWeighted(object):
             unified_intervals: the final unified intervals for the input and output signals
         """
         
+        #Verify data format
+        X, y, X_cols, y_cols = self._verify_data(X,y)
+        
+        #Create Matrix
+        data = np.concatenate([X,y],axis=1)
+        
         #Initialize Internal Variables
-        self._initialize_internal_variables()
+        self._initialize_internal_variables(X=data)
         
         #Apply Recursive Exponential Moving Average/Variance
-        self._mu_k_arr, self._v_k_arr = self.recursive_exponential_moving_average_and_variance()
+        self.recursive_exponential_moving_average_and_variance(X=data)
         
         #Find change-points
-        _ = self.change_points()
+        self.change_points(X=data)
+        
+        #Extend Intervals
+        if self.num_previous_indexes > 0:
+            self._extend_previous_indexes()
+        
+        #Make labeled intervals
+        labeled_intervals = self._label_intervals_with_input_output(X=X, 
+                                                                    X_cols=X_cols, 
+                                                                    y=y, 
+                                                                    y_cols=y_cols)
         
         #Create Indicating Sequence
-        indicating_sequence = self._create_indicating_sequence()
+        indicating_sequence = self._create_indicating_sequence(X=data)
         
-        #Define Intervals
-        self.unified_intervals = self._define_intervals_from_indicating_sequence(indicating_sequence=
-                                                                                 indicating_sequence)
+        
+        #Create Global Sequence
+        global_sequence = self._create_sequential_indicating_sequences(indicating_sequence=
+                                                                       indicating_sequence)
+        
+        
+        #Find intervals that respect min_input_coupling and min_output_coupling
+        final_segment_indexes = self._get_final_intervals(labeled_intervals=labeled_intervals, 
+                                                          global_sequence=global_sequence)
+        
+        self.unified_intervals = dict(zip(range(0,len(final_segment_indexes)),
+                                          final_segment_indexes))
             
         return self.unified_intervals
             
