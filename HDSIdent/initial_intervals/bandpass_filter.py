@@ -173,8 +173,8 @@ class BandpassFilter(object):
             if key > 0:
                 indicating_sequence = np.maximum(indicating_sequence,
                                                  np.array(value))
-        return indicating_sequence
-
+        return indicating_sequence        
+        
     def _create_sequential_indicating_sequences(self, indicating_sequence):
         """
         This function gets the indicating sequence for a given data
@@ -246,7 +246,7 @@ class BandpassFilter(object):
                 name_idx = col_idx - input_size
                 
             if data_cols is not None:
-                data_idx_name = data_cols[name_idx]
+                data_idx_name = data_cols[col_idx]
             else:
                 data_idx_name = data_type+'_'+str(name_idx)
                 
@@ -278,8 +278,35 @@ class BandpassFilter(object):
                     else:
                         min_val = np.min(interval)-self.num_previous_indexes
 
-                    self.sequential_indicating_sequences[key_1][key_2][idx] = np.array(range(min_val,
-                                                                                             np.max(interval)+1))
+                    self.sequential_indicating_sequences[key_1][key_2][idx] = list(range(min_val,
+                                                                                         np.max(interval)+1))
+                    
+    def _update_indicating_sequences(self, X, data_cols, input_size):
+        """
+        This function is used when an _extend_previous_indexes is
+        performed. If the sequential intervals are extended, the
+        indicating sequences must be updated before they are unified.
+        """
+        name_idx = 0
+        for col_idx in range(X.shape[1]):
+            
+            if col_idx <= input_size-1:
+                data_type = 'input'
+                name_idx = col_idx
+            else:
+                data_type = 'output'
+                name_idx = col_idx - input_size
+                
+            if data_cols is not None:
+                data_idx_name = data_cols[col_idx]
+            else:
+                data_idx_name = data_type+'_'+str(name_idx)
+            
+            self._indicating_sequences[col_idx] = np.zeros(len(X[:,col_idx]))
+            sequential_seq = self.sequential_indicating_sequences[data_type][data_idx_name]
+            
+            for seq in sequential_seq:
+                self._indicating_sequences[col_idx][seq] = 1
                 
     def _get_final_intervals(self, labeled_intervals, global_sequence):
         """
@@ -376,18 +403,21 @@ class BandpassFilter(object):
         #Extend Intervals
         if self.num_previous_indexes > 0:
             self._extend_previous_indexes()
+            self._update_indicating_sequences(X=data,
+                                              data_cols=data_cols,
+                                              input_size=X.shape[1])
             
         #Unify Indicating Sequences
-        unified_indicating_sequence = self._unify_indicating_sequences()
+        self.unified_indicating_sequence = self._unify_indicating_sequences()
         
         #Get Global Sequential Sequence (Unified Sequence)
-        global_sequence = \
+        self.global_sequence = \
             self._create_sequential_indicating_sequences(indicating_sequence=
-                                                         unified_indicating_sequence)
+                                                         self.unified_indicating_sequence)
         
         #Find intervals that respect min_input_coupling and min_output_coupling
         final_segment_indexes = self._get_final_intervals(labeled_intervals=sequential_sequences, 
-                                                          global_sequence=global_sequence)
+                                                          global_sequence=self.global_sequence)
         
         self.unified_intervals = dict(zip(range(0,len(final_segment_indexes)),
                                           final_segment_indexes))
