@@ -39,27 +39,14 @@ class ExponentialWeighted(object):
 
         self.forgetting_fact_v = forgetting_fact_v
         self.forgetting_fact_u = forgetting_fact_u
-        self.df_cols = None
+        self.sigma = sigma
+        self.H_u = H_u
+        self.H_v = H_v
         self.min_input_coupling = min_input_coupling
         self.min_output_coupling = min_output_coupling
         self.num_previous_indexes = num_previous_indexes
         self.n_jobs = n_jobs
         self.verbose = verbose
-            
-        if not sigma:
-            self.sigma = np.std(X,axis=0)
-        else:
-            self.sigma = sigma
-        
-        if not H_u:
-            self.H_u = 5*self.sigma
-        else:
-            self.H_u = H_u
-            
-        if not H_v:
-            self.H_v = 5*self.sigma
-        else:
-            self.H_v = H_v
         
     def _verify_data(self,X,y):
         """
@@ -120,7 +107,22 @@ class ExponentialWeighted(object):
         self._mu_k_1 = np.mean(X[:100,:],axis=0)
         self._v_k_1 = np.var(X[:100,:],axis=0)
 
+        self.df_cols = None
         
+        if not self.sigma:
+            self.sigma = np.std(X,axis=0)
+        
+        if not self.H_u:
+            self.H_u = 5*self.sigma
+            
+        if not self.H_v:
+            self.H_v = 5*self.sigma
+
+        if type(self.H_u) == list:
+            self.H_u = np.array(self.H_u)
+        if type(self.H_v) == list:
+            self.H_u = np.array(self.H_u)
+            
     def _exponential_moving_average_and_variance(self, X, idx):
         """
         Performs a recursive exponential moving average/variance 
