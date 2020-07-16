@@ -496,7 +496,7 @@ class ExponentialWeighted(object):
             intervals_arr = self.intervals[col]
             
             sns.set_style("darkgrid")
-            plt.figure(figsize=(15,5))
+            plt.figure(figsize=(15,4))
             if self._criteria == 'variance':
                 plt.plot(self._v_k_arr[:,col], zorder=1, color='coral')
             elif self._criteria == 'average':
@@ -512,10 +512,10 @@ class ExponentialWeighted(object):
                 col_name = f"Signal {df_cols[col]}"
 
             plt.title(f"Moving Average Change Points and Intervals for {col_name}", fontsize=18, fontweight='bold')
-            plt.ylabel("Signal Amplitude", fontsize=18, fontweight='bold')
-            plt.xlabel("Discrete Samples", fontsize=18, fontweight='bold')
-            plt.xticks(fontsize=18,fontweight='bold',color='grey')
-            plt.yticks(fontsize=18,fontweight='bold',color='grey')
+            plt.ylabel("Signal Amplitude", fontsize=18)
+            plt.xlabel("Discrete Samples", fontsize=18)
+            plt.xticks(fontsize=18,color='black')
+            plt.yticks(fontsize=18,color='black')
 
             color_rule = True
             color_arr = ['darkred','darkmagenta']

@@ -308,6 +308,9 @@ class PettittMethod(object):
                 if ((p_value_arr is not None) and (tau_arr is not None)):
                     #Take significant change-point indexes
                     sig_tau_arr = self._select_significant_tau(p_value_arr,tau_arr,self.alpha)
+                    if self.verbose > 0:
+                        print(f"Signal: {data_idx_name}")
+                        print("Change-points: {}".format(self.change_points[data_idx_name]))
                     if sig_tau_arr is not None:
                         self.change_points[data_idx_name]+=sig_tau_arr
                         self.change_points[data_idx_name].sort()
@@ -386,13 +389,12 @@ class PettittMethod(object):
             sns.set_style("darkgrid")
             plt.figure(figsize=(15,5))
             plt.plot(data[:,data_idx],zorder=1,linewidth=0.8, color='coral')
-            col_name = f"Signal {data_idx_name}"
             plt.title(f"Pettitt Non-Parametric Change Points and Intervals for {data_idx_name}",
-                      fontsize=16, fontweight='bold')
-            plt.ylabel("Signal Amplitude", fontsize=14, fontweight='bold')
-            plt.xlabel("Discrete Samples", fontsize=14, fontweight='bold')
-            plt.xticks(fontsize=14,fontweight='bold',color='grey')
-            plt.yticks(fontsize=14,fontweight='bold',color='grey')
+                      fontsize=20, fontweight='bold')
+            plt.ylabel("Signal Amplitude", fontsize=20)
+            plt.xlabel("Discrete Samples", fontsize=20)
+            plt.xticks(fontsize=20, color='black')
+            plt.yticks(fontsize=20, color='black')
             
             for idx in range(0, len(intervals_arr)-1):
                 plt.scatter(np.max(intervals_arr[idx]),
