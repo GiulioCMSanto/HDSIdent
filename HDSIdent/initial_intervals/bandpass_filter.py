@@ -429,7 +429,7 @@ class BandpassFilter(object):
             
         return self.unified_intervals
     
-    def plot_change_points(self, X, y):
+    def plot_change_points(self, X, y, threshold_name='H'):
         """
         Plots all found change points and its corresponding
         intervals.
@@ -468,16 +468,16 @@ class BandpassFilter(object):
             plt.plot(self.butt_mtrx[:,col], color='coral', linewidth=0.8, zorder=1)
             
             plt.plot([H[col]]*len(X),color='black',linestyle='--')
-            plt.annotate(f'+H = {H[col]}',
-                         xy=(10*len(X)/10.5, np.around(H[col]+0.1,2)),
-                         fontsize=12,
+            plt.annotate("+{} = {}".format(threshold_name,H[col]),
+                         xy=(10*len(X)/10.8, np.max(self.butt_mtrx[:,col])*0.4),
+                         fontsize=20,
                          fontweight='bold',
                          color='black')
             
-            plt.plot([-H[col]]*len(X),color='black',linestyle='--')
-            plt.annotate(f'-H = {-H[col]}',
-                         xy=(10*len(X)/10.5, np.around(-H[col]-0.1,2)),
-                         fontsize=12,
+            plt.plot([-H[col]]*len(X),color='black',linestyle='--',label=r"$l_{e}$ Threshold")
+            plt.annotate("-{} = {}".format(threshold_name,-H[col]),
+                         xy=(10*len(X)/10.8, -np.max(self.butt_mtrx[:,col])*0.45),
+                         fontsize=20,
                          fontweight='bold',
                          color='black')
             
@@ -486,17 +486,19 @@ class BandpassFilter(object):
             else:
                 col_name = f"Signal {df_cols[col]}"
                 
-            plt.title(f"Bandpass Filter Change Points and Intervals for {col_name}", fontsize=16, fontweight='bold')
-            plt.ylabel("Signal Amplitude", fontsize=14, fontweight='bold')
-            plt.xlabel("Discrete Samples", fontsize=14, fontweight='bold')
-            plt.xticks(fontsize=14,fontweight='bold',color='grey')
-            plt.yticks(fontsize=14,fontweight='bold',color='grey')
+            plt.title(f"Bandpass Filter Change Points and Intervals for {col_name}", fontsize=20, fontweight='bold')
+            plt.ylabel("Signal Amplitude", fontsize=20)
+            plt.xlabel("Discrete Samples", fontsize=20)
+            plt.xticks(fontsize=20, color='black')
+            plt.yticks(fontsize=20, color='black')
             
             #Plot deviation from the mean
             plt.scatter(deviation_idxs, 
                         self.butt_mtrx[:,col][deviation_idxs], 
                         s=0.5, 
                         color='darkred',
-                        zorder=2)
-                    
+                        zorder=2,
+                        label="Intervals")
+            
+            plt.legend(fontsize=18,markerscale=10)
             plt.show()
