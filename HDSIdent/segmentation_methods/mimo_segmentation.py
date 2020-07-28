@@ -42,17 +42,17 @@ class MIMOSegmentation(object):
         
         segmentation_method: the segmentation method to be considered, or a list of the
         desired methods. Example: ['method1', 'method2']. The available methods are:
-            - 'method1': considers the Condition Number and the Qui-squared test;
+            - 'method1': considers the Condition Number and the chi-squared test;
             - 'method2': considers the Effective Rank and the Scalar Cross-correlation metric;
             - 'method3': considers the Condition Number and the Scalar Cross-correlation metric;
-            - 'method4': considers the Effective Rank and the Qui-Squared test;
-            - 'method5': considers the Condition Number, the Qui-Squared Test and the Scalar Cross-correlation metric;
-            - 'mehtod6': considers the Effective Rank, the Qui-Squared Test and the Scalar Cross-correlation metric;
-            - 'method7': considers the Condition Number, the Effective Rank, the Qui-Squared Test and the Scalar Cross-correlation metric;
+            - 'method4': considers the Effective Rank and the chi-Squared test;
+            - 'method5': considers the Condition Number, the chi-Squared Test and the Scalar Cross-correlation metric;
+            - 'mehtod6': considers the Effective Rank, the chi-Squared Test and the Scalar Cross-correlation metric;
+            - 'method7': considers the Condition Number, the Effective Rank, the chi-Squared Test and the Scalar Cross-correlation metric;
  
         parameters_dict: a dictionary with the segmentation parameters. Notice that depending
         on the chosen method, different parameters are required. An example of parameters_dict:
-            {'Laguerre':{'qui2_p_value_thr':0.01 <required for methods 1, 4, 5, 6 and 7>, 
+            {'Laguerre':{'chi2_p_value_thr':0.01 <required for methods 1, 4, 5, 6 and 7>, 
                          'cond_thr':300 <required for methods 1, 3, 5 and 7>, 
                          'eff_rank_thr':9 <required for methods 2, 4, 6 and 7>,
                          'cc_thr':3 <required for methods 2, 3, 5, 6 and 7>,
@@ -77,6 +77,7 @@ class MIMOSegmentation(object):
                  parameters_dict,
                  segmentation_type='stationary',
                  increment_size = 10,
+                 interval_max_length = None,
                  n_jobs=-1,
                  verbose=0):
         
@@ -91,6 +92,7 @@ class MIMOSegmentation(object):
         self.parameters_dict = parameters_dict
         self.segmentation_type = segmentation_type
         self.increment_size = increment_size
+        self.interval_max_length = interval_max_length
         self.n_jobs = n_jobs
         self.verbose = verbose
     
@@ -118,7 +120,7 @@ class MIMOSegmentation(object):
         self.tests_results = defaultdict(nested_dict)
         self.sucessed_intervals = defaultdict(nested_dict)
     
-    def _compute_model_metrics(self, X, y, verbose=0):
+    def _compute_model_metrics(self, X, y, sp, verbose=0):
         """
         This function takes the metrics computed by
         a particular model structure and stores them
@@ -128,7 +130,7 @@ class MIMOSegmentation(object):
         - miso_ranks: the effective ranks
         - miso_correlations: the scalar cross-correlation
         - cond_num_dict: the condition numbers
-        - qui_squared_dict: the qui-squared test results
+        - qui_squared_dict: the chi-squared test results
         
         Arguments:
             X: the input signal matrix. Each column corresponds
@@ -145,7 +147,7 @@ class MIMOSegmentation(object):
             (miso_ranks, 
              miso_correlations, 
              cond_num_dict,
-             qui_squared_dict) = structure.fit(X=X,y=y)    
+             qui_squared_dict) = structure.fit(X=X,y=y,sp=sp)    
 
             self._metrics_dict[structure.name]['miso_ranks'] = miso_ranks
             self._metrics_dict[structure.name]['miso_correlations'] = miso_correlations
@@ -164,7 +166,7 @@ class MIMOSegmentation(object):
         1) The Condition Number of a given interval is lower then
         its provided threshold;
         
-        2) The qui-squared computed statistic is greater than the
+        2) The chi-squared computed statistic is greater than the
         critical value for a given p-value.
         
         This test if performed for every combination of input/output
@@ -199,7 +201,7 @@ class MIMOSegmentation(object):
                                                 [output_idx]\
                                                 [input_idx]
 
-                qui_thr = chi2.ppf(1-self.parameters_dict[structure.name]['qui2_p_value_thr'],structure.Nb)
+                qui_thr = chi2.ppf(1-self.parameters_dict[structure.name]['chi2_p_value_thr'],structure.Nb)
                 cond_thr = self.parameters_dict[structure.name]['cond_thr']
 
                 if ((cond_num <= cond_thr) and (qui_squared >= qui_thr)):
@@ -428,7 +430,7 @@ class MIMOSegmentation(object):
         1) The Effective Rank of a given interval is higher then
         its provided threshold;
         
-        2) The qui-squared computed statistic is greater than the
+        2) The chi-squared computed statistic is greater than the
         critical value for a given p-value.
         
         This test if performed for every combination of input/output
@@ -464,7 +466,7 @@ class MIMOSegmentation(object):
                                                 [input_idx]
 
                 eff_rank_thr = self.parameters_dict[structure.name]['eff_rank_thr']
-                qui_thr = chi2.ppf(1-self.parameters_dict[structure.name]['qui2_p_value_thr'],structure.Nb)
+                qui_thr = chi2.ppf(1-self.parameters_dict[structure.name]['chi2_p_value_thr'],structure.Nb)
 
                 if ((eff_rank >= eff_rank_thr) and (qui_squared >= qui_thr)):
                     num_input_sucesses += 1
@@ -516,7 +518,7 @@ class MIMOSegmentation(object):
         1) The Condition Number of a given interval is lower then
         its provided threshold;
         
-        2) The qui-squared computed statistic is greater than the
+        2) The chi-squared computed statistic is greater than the
         critical value for a given p-value;
         
         3) The scalar cross-correlation metric is greater than the
@@ -560,7 +562,7 @@ class MIMOSegmentation(object):
                                                [output_idx]\
                                                [input_idx]
                 
-                qui_thr = chi2.ppf(1-self.parameters_dict[structure.name]['qui2_p_value_thr'],structure.Nb)
+                qui_thr = chi2.ppf(1-self.parameters_dict[structure.name]['chi2_p_value_thr'],structure.Nb)
                 cond_thr = self.parameters_dict[structure.name]['cond_thr']
                 cc_thr = self.parameters_dict[structure.name]['cc_thr']
                 
@@ -614,7 +616,7 @@ class MIMOSegmentation(object):
         1) The Effective Rank of a given interval is higher then
         its provided threshold;
         
-        2) The qui-squared computed statistic is greater than the
+        2) The chi-squared computed statistic is greater than the
         critical value for a given p-value;
         
         3) The scalar cross-correlation metric is greater than the
@@ -659,7 +661,7 @@ class MIMOSegmentation(object):
                                                [input_idx]
                 
                 eff_rank_thr = self.parameters_dict[structure.name]['eff_rank_thr']
-                qui_thr = chi2.ppf(1-self.parameters_dict[structure.name]['qui2_p_value_thr'],structure.Nb)
+                qui_thr = chi2.ppf(1-self.parameters_dict[structure.name]['chi2_p_value_thr'],structure.Nb)
                 cc_thr = self.parameters_dict[structure.name]['cc_thr']
                 
                 if ((eff_rank >= eff_rank_thr) and (qui_squared >= qui_thr) and (cross_corr >= cc_thr)):
@@ -715,7 +717,7 @@ class MIMOSegmentation(object):
         2) The Effective Rank of a given interval is higher then
         its provided threshold;
         
-        3) The qui-squared computed statistic is greater than the
+        3) The chi-squared computed statistic is greater than the
         critical value for a given p-value;
         
         4) The scalar cross-correlation metric is greater than the
@@ -767,7 +769,7 @@ class MIMOSegmentation(object):
                 
                 cond_thr = self.parameters_dict[structure.name]['cond_thr']
                 eff_rank_thr = self.parameters_dict[structure.name]['eff_rank_thr']
-                qui_thr = chi2.ppf(1-self.parameters_dict[structure.name]['qui2_p_value_thr'],structure.Nb)
+                qui_thr = chi2.ppf(1-self.parameters_dict[structure.name]['chi2_p_value_thr'],structure.Nb)
                 cc_thr = self.parameters_dict[structure.name]['cc_thr']
                 
                 if ((eff_rank >= eff_rank_thr) and (cond_num <= cond_thr) and 
@@ -844,8 +846,8 @@ class MIMOSegmentation(object):
             
             if verbose > 0:
                 print("Stationary Segmentation Finished! \n\n")
-             
-    def _apply_incremental_segmentation(self, X, y, verbose=0):
+                    
+    def _apply_incremental_segmentation(self, X, y, sp, verbose=0):
         """
         This function applies an incremental MIMO segmentation
         for System Identification. The incremental segmentation
@@ -900,25 +902,32 @@ class MIMOSegmentation(object):
                     #Increment Interval
                     for idx in np.arange(interval_max_idx+1, next_interval_min_idx, self.increment_size):
                         #Check if last stationary segmentaion failed or not
-                        if self._last_test_succeeded[method][structure.name][key]:
-                            structure.initial_intervals[int(key.split('_')[1])].append(idx)
-                            self._compute_model_metrics(X=X,y=y)
+                        if ((self._last_test_succeeded[method][structure.name][key]) and 
+                            (len(structure.initial_intervals[int(key.split('_')[1])]) <= self.interval_max_length)):
+
+                            min_idx = np.max(structure.initial_intervals[int(key.split('_')[1])])+1
+                            max_idx = idx+1
+                            structure.initial_intervals[int(key.split('_')[1])]+=list(range(min_idx,max_idx))
+                            self._compute_model_metrics(X=X,y=y,sp=sp)
                             self._apply_stationary_segmentation()
-                            
+
                             if verbose > 0:
                                 print("Current Index: {}".\
-                                      format(np.max(structure.initial_intervals[int(key.split('_')[1])])))
+                                        format(np.max(structure.initial_intervals[int(key.split('_')[1])])))
+                                print("Current Interval Length: {}".\
+                                        format(len(structure.initial_intervals[int(key.split('_')[1])])))
                                 print("Condition Number: {}".\
-                                      format(self._metrics_dict[structure.name]['cond_num_dict'][key]))
-                                print("Qui-squared Test: {}".\
-                                      format(self._metrics_dict[structure.name]['qui_squared_dict'][key]))
+                                        format(self._metrics_dict[structure.name]['cond_num_dict'][key]))
+                                print("chi-squared Test: {}".\
+                                        format(self._metrics_dict[structure.name]['qui_squared_dict'][key]))
                                 print("Effective Ranks: {}".\
-                                      format(self._metrics_dict[structure.name]['miso_ranks'][key]))
+                                        format(self._metrics_dict[structure.name]['miso_ranks'][key]))
                                 print("Scalar Cross-correlation: {} \n".\
-                                      format(self._metrics_dict[structure.name]['miso_correlations'][key]))
+                                        format(self._metrics_dict[structure.name]['miso_correlations'][key]))
                         else:
                             self._indexes_of_failure[method][structure.name][key] = idx - self.increment_size
                             break
+
                     counter+=1
         
         #Restore Original Model Structures
@@ -931,7 +940,7 @@ class MIMOSegmentation(object):
         if verbose > 0:
             print("Incremental Segmentation Successfully Finished! \n\n")
                                                        
-    def fit(self, X, y):
+    def fit(self, X, y, sp=None):
         """
         This function performs all the steps required for
         performing a MIMO Segmentation or System Identification
@@ -949,10 +958,10 @@ class MIMOSegmentation(object):
         self._initialize_internal_variables()
         
         #Fit model Structures
-        self._compute_model_metrics(X=X,y=y,verbose=self.verbose)
+        self._compute_model_metrics(X=X,y=y,sp=sp,verbose=self.verbose)
         
         #Make Segmentation
         if self.segmentation_type == 'stationary':
             self._apply_stationary_segmentation(verbose=self.verbose)
         else:
-            self._apply_incremental_segmentation(X=X, y=y, verbose=self.verbose)
+            self._apply_incremental_segmentation(X=X, y=y, sp=sp, verbose=self.verbose)

@@ -16,7 +16,7 @@ class ARStructure(ModelStructure):
     3) Compute the Condition Number
     4) Compute a scalar correlation between each input and each output
     5) Estimate the regression parameters
-    6) Compute a qui-squared test for the regression parameters
+    6) Compute a chi-squared test for the regression parameters
     
     Arguments:
         ny: the AR model order
@@ -124,7 +124,7 @@ class ARStructure(ModelStructure):
             - Computes the cross-correlation scalar metric for each input and output data;
             - Computes the Condition Number for each Regressor Matrix from each segment;
             - Computes the AR parameters estimations;
-            - Computes the qui-squared test for validating the estimated parameters;
+            - Computes the chi-squared test for validating the estimated parameters;
         
         Arguments:
             X: the input signal
@@ -134,7 +134,7 @@ class ARStructure(ModelStructure):
             (self.miso_ranks: the effective rank for each (input/output) regressor,
              self.miso_correlations: the scalar metric cross-correlation for each input/output, 
              self.cond_num_dict: the Condition Number for each (input/output) regressor, 
-             self.qui_squared_dict: the qui-squared test for validating the estimated parameters)
+             self.chi_squared_dict: the chi-squared test for validating the estimated parameters)
         """
         #Verify data format
         X, y, X_cols, y_cols = self._verify_data(X,y)
@@ -189,4 +189,4 @@ class ARStructure(ModelStructure):
         if self.verbose > 0:
             print("AR fit finished!")
             
-        return (self.miso_ranks, self.miso_correlations, self.cond_num_dict, self.qui_squared_dict)
+        return (self.miso_ranks, self.miso_correlations, self.cond_num_dict, self.chi_squared_dict)

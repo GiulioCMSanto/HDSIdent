@@ -1,13 +1,11 @@
 from HDSIdent.model_structures.model_structures import ModelStructure
- 
+from sympy import symbols, poly, expand
 from numpy.linalg import cond, qr, norm
 from joblib import Parallel, delayed
 from collections import defaultdict
 from scipy import signal
 import pandas as pd
 import numpy as np
-from sympy import *
-import sympy
 
 class LaguerreStructure(ModelStructure):
     """
@@ -32,7 +30,7 @@ class LaguerreStructure(ModelStructure):
     3) Compute the Condition Number
     4) Compute a scalar correlation between each input and each output
     5) Estimate the regression parameters
-    6) Compute a qui-squared test for the regression parameters
+    6) Compute a chi-squared test for the regression parameters
     
     Arguments:
         Nb: the Laguerre Filter order
@@ -47,13 +45,13 @@ class LaguerreStructure(ModelStructure):
         verbose: the degree of verbosity (from 0 to 10)
     """
     def __init__(self,
-                 Nb,
-                 p,
-                 delay,
-                 cc_alpha,
                  initial_intervals,
-                 efr_type,
-                 sv_thr = 0.1,
+                 Nb=None,
+                 p=None,
+                 delay=None,
+                 cc_alpha=None,
+                 efr_type=None,
+                 sv_thr = None,
                  Ts = 1,
                  n_jobs = -1,
                  verbose = 0):
@@ -178,59 +176,135 @@ class LaguerreStructure(ModelStructure):
                                  y_cols = y_cols,
                                  segment = segment)
     
-    def fit(self, X, y):
+    def _closed_loop_fit(self, X, X_cols, y, y_cols, sp, sp_cols):
         """
-        This function performs the following rotines:
-            - Computes the Laguerre Regressor Matrix for the given data;
-            - Computes the effective rank for the regressor matrix;
-            - Computes the cross-correlation scalar metric for each input and output data;
-            - Computes the Condition Number for each Regressor Matrix from each segment;
-            - Computes the Laguerre parameters estimations;
-            - Computes the qui-squared test for validating the estimated parameters;
-        
-        Arguments:
-            X: the input signal
-            y: the output signal
-        
-        Output:
-            (self.miso_ranks: the effective rank for each (input/output) regressor,
-             self.miso_correlations: the scalar metric cross-correlation for each input/output, 
-             self.cond_num_dict: the Condition Number for each (input/output) regressor, 
-             self.qui_squared_dict: the qui-squared test for validating the estimated parameters)
+        This function computes all the metrics under the optics of
+        a closed-loop system identification. The numerical conditioning
+        metrics are computed using the set-point. However, for metrics that
+        require an estimate of the model parameters (such as the chi-squared
+        test), the manipulated variable is used.
         """
-        #Verify data format
-        X, y, X_cols, y_cols = self._verify_data(X,y)
-        
-        #Initialize Internal Variables
-        self._initialize_metrics(X,y,X_cols,y_cols)
+        #Make an Parallel executor
+        executor = Parallel(require='sharedmem',
+                            n_jobs=self.n_jobs,
+                            verbose=self.verbose)
+
+        if ((self.Nb is not None) and (self.p is not None)):
+
+            if self.verbose > 0:
+                print("Computing Laguerre Regressor Matrix Using Set-point...")
+
+            #Compute Laguerre Regressor Matrix With set-point
+            lg_regressor_task = (delayed(self._compute_leguerre_regressor_matrix)(sp, y, input_idx,
+                                                                                  X_cols, output_idx,
+                                                                                  y_cols, segment)
+                                for segment in self.initial_intervals.keys()
+                                for input_idx in range(0,X.shape[1])
+                                for output_idx in range(0,y.shape[1]))
+            executor(lg_regressor_task)
+
+            if self.verbose > 0:
+                print("Computing Condition Number with Set-point...")
+
+            #Compute Condition Number for the Set-point
+            cond_numb_task = (delayed(self._qr_factorization)(y, input_idx,
+                                                              X_cols, output_idx,
+                                                              y_cols, segment,
+                                                              'condition_number')
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
+            executor(cond_numb_task) 
+
+        if ((self.efr_type is not None) and (self.sv_thr is not None)):
+
+            if self.verbose > 0:
+                print("Computing Effective Rank Using Set-point...")
+
+            #Compute the Effective Rank for each MISO system with the Set-point
+            miso_ranks_task = (delayed(self._compute_Laguerre_miso_ranks)(sp, y, input_idx, 
+                                                                          X_cols, output_idx,
+                                                                          y_cols, segment)
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
+            executor(miso_ranks_task)
+
+        if ((self.delay is not None) and (self.cc_alpha is not None)):
+
+            if self.verbose > 0:
+                print("Computing Cross-correlation Using Set-point...")
+
+            #Compute cross-correlation scalar metric for each MISO system with the Set-point
+            miso_corr_task = (delayed(self._compute_miso_correlations)(sp, y, input_idx,
+                                                                       X_cols, output_idx,
+                                                                       y_cols, segment)
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
+            executor(miso_corr_task)
+
+        if ((self.Nb is not None) and (self.p is not None)):
+
+            if self.verbose > 0:
+                print("Computing Chi-squared Test Using Manipulated Variable...")
+
+            #Compute Laguerre Regressor Matrix with manipulated variable
+            lg_regressor_task = (delayed(self._compute_leguerre_regressor_matrix)(X, y, input_idx,
+                                                                                  X_cols, output_idx,
+                                                                                  y_cols, segment)
+                                for segment in self.initial_intervals.keys()
+                                for input_idx in range(0,X.shape[1])
+                                for output_idx in range(0,y.shape[1]))
+            executor(lg_regressor_task)
+
+            #Make QR_Factorization (Condition Number and chi-squared Test)
+            cond_numb_task = (delayed(self._qr_factorization)(y, input_idx,
+                                                              X_cols, output_idx,
+                                                              y_cols, segment,
+                                                              'chi_squared_test')
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
+            executor(cond_numb_task) 
+
+    def _open_loop_fit(self, X, X_cols, y, y_cols):
+        """
+        This function computes all the metrics under the optics of
+        an open-loop system identification. Notice that if the system
+        is controlled by a PID, for example, you can still use this
+        function for evaluate the system using its set-point as the
+        input variable (which would still be an open-loop identification).
+        """
 
         #Make an Parallel executor
         executor = Parallel(require='sharedmem',
                             n_jobs=self.n_jobs,
                             verbose=self.verbose)
-        
+
         if self.verbose > 0:
             print("Computing Laguerre Regressor Matrix...")
-            
+
         #Compute Laguerre Regressor Matrix
         lg_regressor_task = (delayed(self._compute_leguerre_regressor_matrix)(X, y, input_idx,
                                                                               X_cols, output_idx,
                                                                               y_cols, segment)
-                              for segment in self.initial_intervals.keys()
-                              for input_idx in range(0,X.shape[1])
-                              for output_idx in range(0,y.shape[1]))
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
         executor(lg_regressor_task)
         
         if self.verbose > 0:
             print("Performing QR-Decomposition...")
             
-        #Make QR_Factorization (Condition Number and Qui-squared Test)
+        #Make QR_Factorization (Condition Number and chi-squared Test)
         cond_numb_task = (delayed(self._qr_factorization)(y, input_idx,
                                                           X_cols, output_idx,
-                                                          y_cols, segment)
-                          for segment in self.initial_intervals.keys()
-                          for input_idx in range(0,X.shape[1])
-                          for output_idx in range(0,y.shape[1]))
+                                                          y_cols, segment,
+                                                          "all")
+                        for segment in self.initial_intervals.keys()
+                        for input_idx in range(0,X.shape[1])
+                        for output_idx in range(0,y.shape[1]))
         executor(cond_numb_task)   
         
         if self.verbose > 0:
@@ -240,9 +314,9 @@ class LaguerreStructure(ModelStructure):
         miso_ranks_task = (delayed(self._compute_Laguerre_miso_ranks)(X, y, input_idx, 
                                                                       X_cols, output_idx,
                                                                       y_cols, segment)
-                           for segment in self.initial_intervals.keys()
-                           for input_idx in range(0,X.shape[1])
-                           for output_idx in range(0,y.shape[1]))
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
         
         executor(miso_ranks_task)    
         
@@ -253,12 +327,53 @@ class LaguerreStructure(ModelStructure):
         miso_corr_task = (delayed(self._compute_miso_correlations)(X, y, input_idx,
                                                                    X_cols, output_idx,
                                                                    y_cols, segment)
-                          for segment in self.initial_intervals.keys()
-                          for input_idx in range(0,X.shape[1])
-                          for output_idx in range(0,y.shape[1]))
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
         executor(miso_corr_task)
         
         if self.verbose > 0:
             print("Laguerre fit finished!")
+
+    def fit(self, X, y, sp=None):
+        """
+        This function performs the following rotines:
+            - Computes the Laguerre Regressor Matrix for the given data;
+            - Computes the effective rank for the regressor matrix;
+            - Computes the cross-correlation scalar metric for each input and output data;
+            - Computes the Condition Number for each Regressor Matrix from each segment;
+            - Computes the Laguerre parameters estimations;
+            - Computes the chi-squared test for validating the estimated parameters;
+        
+        This function can be applied to MIMO system throught the optics of an open-loop
+        identification or to SISO system under open or closed-loop identification.
+        
+        Arguments:
+            X: the input signal
+            y: the output signal
+        
+        Output:
+            (self.miso_ranks: the effective rank for each (input/output) regressor,
+             self.miso_correlations: the scalar metric cross-correlation for each input/output, 
+             self.cond_num_dict: the Condition Number for each (input/output) regressor, 
+             self.chi_squared_dict: the chi-squared test for validating the estimated parameters)
+        """
+        #Verify data format
+        X, y, X_cols, y_cols = self._verify_data(X,y)
+        if sp is not None:
+            sp, _, sp_cols, _ = self._verify_data(sp,y)
+
+        #Initialize Internal Variables
+        self._initialize_metrics(X,y,X_cols,y_cols)
+        
+        #Fit Laguerre Structure
+        if sp is not None:
+            if ((sp.shape[1] > 1) or (X.shape[1] > 1) or (y.shape[1] > 1)):
+                print("Closed-loop analysis only supported for SISO systems...")
+                return None
+            else:
+                self._closed_loop_fit(X, X_cols, y, y_cols, sp, sp_cols)
+        else:
+            self._open_loop_fit(X, X_cols, y, y_cols)
             
-        return (self.miso_ranks, self.miso_correlations, self.cond_num_dict, self.qui_squared_dict)
+        return (self.miso_ranks, self.miso_correlations, self.cond_num_dict, self.chi_squared_dict)

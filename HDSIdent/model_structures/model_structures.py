@@ -62,7 +62,7 @@ class ModelStructure(object):
             - I_dict: a dictionary of information matrices of the form [Phi]^T[Phi];
             - cond_num_dict: a dictionary of condition numbers for each information matrix;
             - theta_dict: a dictionary of estimated parameter vectors phi = [ph1 ph2 ... phiNb];
-            - qui_squared_dict: a dictionary of qui-squared test for validating the estimated parameters;
+            - chi_squared_dict: a dictionary of chi-squared test for validating the estimated parameters;
             - cross_corr_dict: a dictionary of cross-correlations for each input/output;
             - eff_rank_1_dict: a dictionary of type 1 effective ranks;
             - eff_rank_2_dict: a dictionary of type 2 effective ranks;
@@ -75,7 +75,7 @@ class ModelStructure(object):
         self.I_dict = defaultdict(lambda: defaultdict(dict))
         self.cond_num_dict = defaultdict(lambda: defaultdict(dict))
         self.theta_dict = defaultdict(lambda: defaultdict(dict))
-        self.qui_squared_dict = defaultdict(lambda: defaultdict(dict))
+        self.chi_squared_dict = defaultdict(lambda: defaultdict(dict))
         self.cross_corr_dict = defaultdict(lambda: defaultdict(dict))
         self.eff_rank_1_dict = defaultdict(lambda: defaultdict(dict))
         self.eff_rank_2_dict = defaultdict(lambda: defaultdict(dict))
@@ -102,7 +102,7 @@ class ModelStructure(object):
         
         return input_idx_name, output_idx_name
             
-    def _qr_factorization(self, y, input_idx, X_cols, output_idx, y_cols, segment):
+    def _qr_factorization(self, y, input_idx, X_cols, output_idx, y_cols, segment, operation):
         """
         Performs a QR-Factorization (Decomposition) using numpy linear
         algebra library and uses the R matrix to solve the Ordinary Least
@@ -115,6 +115,7 @@ class ModelStructure(object):
             output_idx: the sequential number of the execution output;
             y_cols: the output data columns in case they are provided;
             segment: the sequential number of the execution segment (interval).
+            operation: which operation to perform (all, condition_number or chi_squared_test)
         """
         
         #Take Column Names
@@ -159,32 +160,34 @@ class ModelStructure(object):
         R2 = R[:self.Nb,self.Nb]
         R3 = R[self.Nb,self.Nb]
         
-        #Comput Theta, Information Matrix and its Condition Number and the Qui-squared Test
-        self.I_dict['segment'+'_'+str(segment)] \
-                   [output_idx_name] \
-                   [input_idx_name] = \
-            (1/len(np.squeeze(y[segment_idx,output_idx][y_shift:])))*np.matmul(R1.T,R1)
+        #Comput Theta, Information Matrix and its Condition Number and the chi-squared Test
+        if operation in ('all','condition_number'):
+            self.I_dict['segment'+'_'+str(segment)] \
+                    [output_idx_name] \
+                    [input_idx_name] = \
+                (1/len(np.squeeze(y[segment_idx,output_idx][y_shift:])))*np.matmul(R1.T,R1)
+            
+            self.cond_num_dict['segment'+'_'+str(segment)] \
+                            [output_idx_name] \
+                            [input_idx_name] = \
+                LA.cond(self.I_dict['segment'+'_'+str(segment)] \
+                                [output_idx_name] \
+                                [input_idx_name])
         
-        self.cond_num_dict['segment'+'_'+str(segment)] \
-                          [output_idx_name] \
-                          [input_idx_name] = \
-            LA.cond(self.I_dict['segment'+'_'+str(segment)] \
-                               [output_idx_name] \
-                               [input_idx_name])
-        
-        try:
-            self.theta_dict['segment'+'_'+str(segment)] \
-                           [output_idx_name] \
-                           [input_idx_name] = \
-                np.matmul(LA.inv(R1),R2)
-        except:
-            pass
-        
-        self.qui_squared_dict['segment'+'_'+str(segment)] \
-                             [output_idx_name] \
-                             [input_idx_name] = \
-            (np.sqrt(len(np.squeeze(y[segment_idx,output_idx][y_shift:])))/
-             np.abs(R3))*LA.norm(x=R2, ord=2)
+        if operation in ('all','chi_squared_test'):
+            try:
+                self.theta_dict['segment'+'_'+str(segment)] \
+                            [output_idx_name] \
+                            [input_idx_name] = \
+                    np.matmul(LA.inv(R1),R2)
+            except:
+                pass
+            
+            self.chi_squared_dict['segment'+'_'+str(segment)] \
+                                [output_idx_name] \
+                                [input_idx_name] = \
+                (np.sqrt(len(np.squeeze(y[segment_idx,output_idx][y_shift:])))/
+                np.abs(R3))*LA.norm(x=R2, ord=2)
     
     def _cross_correlation_scalar_metric(self, X, y, delay, cc_alpha):
         """
@@ -210,7 +213,7 @@ class ModelStructure(object):
             ccsm: the cross-correlation scalar metric.
         """
         #Compute p-value
-        p = sci_norm.ppf(1-(1-cc_alpha)/2)/np.sqrt(len(X))
+        p = sci_norm.ppf(1-(cc_alpha)/2)/np.sqrt(len(X))
 
         s_arr = []
         for d in range(-delay,delay+1):
@@ -220,9 +223,9 @@ class ModelStructure(object):
             if np.abs(ncc) <= p:
                 s_arr.append(0)
             elif np.abs(ncc) > p and d != 0:
-                s_arr.append(np.abs(ncc - p)/np.abs(d))
+                s_arr.append((np.abs(ncc)-p)/np.abs(d))
             else:
-                s_arr.append(np.abs(ncc - p))
+                s_arr.append(np.abs(ncc)-p)
 
         ccsm = np.sum(s_arr)
 
@@ -241,16 +244,18 @@ class ModelStructure(object):
         Output:
             ncc: the normalized cross-correlation value.
         """
+        X_mean = np.mean(X)
+        y_mean = np.mean(y)
 
         if delay < 0:
-            num = np.sum([X[idx]*y[idx+delay] for idx in range(delay,len(X))])
-            den_1 = np.sum([X[idx]**2 for idx in range(delay,len(X))])
-            den_2 = np.sum([y[idx+delay]**2 for idx in range(delay,len(X))])
+            num = np.sum([(X[idx]-X_mean)*(y[idx+delay]-y_mean) for idx in range(np.abs(delay),len(X))])
+            den_1 = np.sum([(X[idx]-X_mean)**2 for idx in range(np.abs(delay),len(X))])
+            den_2 = np.sum([(y[idx+delay]-y_mean)**2 for idx in range(np.abs(delay),len(X))])
             den = np.sqrt(den_1*den_2)
         else:
-            num = np.sum([X[idx]*y[idx+delay] for idx in range(0,len(X)-delay)])
-            den_1 = np.sum([X[idx]**2 for idx in range(0,len(X)-delay)])
-            den_2 = np.sum([y[idx+delay]**2 for idx in range(0,len(X)-delay)])
+            num = np.sum([(X[idx]-X_mean)*(y[idx+delay]-y_mean) for idx in range(0,len(X)-delay)])
+            den_1 = np.sum([(X[idx]-X_mean)**2 for idx in range(0,len(X)-delay)])
+            den_2 = np.sum([(y[idx+delay]-y_mean)**2 for idx in range(0,len(X)-delay)])
             den = np.sqrt(den_1*den_2)
         
         if den == 0:
