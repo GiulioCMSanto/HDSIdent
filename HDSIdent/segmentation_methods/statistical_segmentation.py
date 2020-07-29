@@ -438,8 +438,10 @@ class MIMOStatistical(object):
         
         if tcalc > stats.t.ppf(1-self.alpha/2, df=df):
             data_signal_indexes = np.array(self.data_segments_dict[data_type][data_idx_name])
-            true_data_indexes = data_signal_indexes[segment_idx+1]
-            self.indicating_sequences[data_type][data_idx_name][true_data_indexes] = 1.0
+            true_data_indexes_1 = data_signal_indexes[segment_idx]
+            true_data_indexes_2 = data_signal_indexes[segment_idx+1]
+            self.indicating_sequences[data_type][data_idx_name][true_data_indexes_1] = 1.0
+            self.indicating_sequences[data_type][data_idx_name][true_data_indexes_2] = 1.0
             return tcalc
         else:
             return tcalc

@@ -261,7 +261,7 @@ class ExponentialWeighted(object):
         """
         This function creates an indicating sequence, i.e., an array containing 1's
         in the intervals of interest and 0's otherwise, based on each interval obtained
-        by the bandpass filter approach.
+        by the exponential weighted filter approach.
         
         Output:
             indicating_sequence: the indicating sequence
