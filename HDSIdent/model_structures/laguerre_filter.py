@@ -286,51 +286,54 @@ class LaguerreStructure(ModelStructure):
             print("Computing Laguerre Regressor Matrix...")
 
         #Compute Laguerre Regressor Matrix
-        lg_regressor_task = (delayed(self._compute_leguerre_regressor_matrix)(X, y, input_idx,
-                                                                              X_cols, output_idx,
-                                                                              y_cols, segment)
+        if ((self.Nb is not None) and (self.p is not None)):
+            lg_regressor_task = (delayed(self._compute_leguerre_regressor_matrix)(X, y, input_idx,
+                                                                                X_cols, output_idx,
+                                                                                y_cols, segment)
+                                for segment in self.initial_intervals.keys()
+                                for input_idx in range(0,X.shape[1])
+                                for output_idx in range(0,y.shape[1]))
+            executor(lg_regressor_task)
+            
+            if self.verbose > 0:
+                print("Performing QR-Decomposition...")
+                
+            #Make QR_Factorization (Condition Number and chi-squared Test)
+            cond_numb_task = (delayed(self._qr_factorization)(y, input_idx,
+                                                            X_cols, output_idx,
+                                                            y_cols, segment,
+                                                            "all")
                             for segment in self.initial_intervals.keys()
                             for input_idx in range(0,X.shape[1])
                             for output_idx in range(0,y.shape[1]))
-        executor(lg_regressor_task)
-        
-        if self.verbose > 0:
-            print("Performing QR-Decomposition...")
-            
-        #Make QR_Factorization (Condition Number and chi-squared Test)
-        cond_numb_task = (delayed(self._qr_factorization)(y, input_idx,
-                                                          X_cols, output_idx,
-                                                          y_cols, segment,
-                                                          "all")
-                        for segment in self.initial_intervals.keys()
-                        for input_idx in range(0,X.shape[1])
-                        for output_idx in range(0,y.shape[1]))
-        executor(cond_numb_task)   
+            executor(cond_numb_task)   
         
         if self.verbose > 0:
             print("Computing Effective Rank...")
             
         #Compute the Effective Rank for each MISO system 
-        miso_ranks_task = (delayed(self._compute_Laguerre_miso_ranks)(X, y, input_idx, 
-                                                                      X_cols, output_idx,
-                                                                      y_cols, segment)
-                            for segment in self.initial_intervals.keys()
-                            for input_idx in range(0,X.shape[1])
-                            for output_idx in range(0,y.shape[1]))
-        
-        executor(miso_ranks_task)    
+        if ((self.efr_type is not None) and (self.sv_thr is not None)):
+            miso_ranks_task = (delayed(self._compute_Laguerre_miso_ranks)(X, y, input_idx, 
+                                                                        X_cols, output_idx,
+                                                                        y_cols, segment)
+                                for segment in self.initial_intervals.keys()
+                                for input_idx in range(0,X.shape[1])
+                                for output_idx in range(0,y.shape[1]))
+            
+            executor(miso_ranks_task)    
         
         if self.verbose > 0:
             print("Computing Cross-Correlation Metric...")
             
         #Compute cross-correlation scalar metric for each MISO system
-        miso_corr_task = (delayed(self._compute_miso_correlations)(X, y, input_idx,
-                                                                   X_cols, output_idx,
-                                                                   y_cols, segment)
-                            for segment in self.initial_intervals.keys()
-                            for input_idx in range(0,X.shape[1])
-                            for output_idx in range(0,y.shape[1]))
-        executor(miso_corr_task)
+        if ((self.delay is not None) and (self.cc_alpha is not None)):
+            miso_corr_task = (delayed(self._compute_miso_correlations)(X, y, input_idx,
+                                                                    X_cols, output_idx,
+                                                                    y_cols, segment)
+                                for segment in self.initial_intervals.keys()
+                                for input_idx in range(0,X.shape[1])
+                                for output_idx in range(0,y.shape[1]))
+            executor(miso_corr_task)
         
         if self.verbose > 0:
             print("Laguerre fit finished!")

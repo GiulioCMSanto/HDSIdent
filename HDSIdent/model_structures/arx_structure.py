@@ -229,53 +229,59 @@ class ARXStructure(ModelStructure):
         executor = Parallel(require='sharedmem',
                             n_jobs=self.n_jobs,
                             verbose=self.verbose)
-        
-        if self.verbose > 0:
-            print("Computing ARX Regressor Matrix...")
             
         #Compute ARX Regressor Matrix
-        arx_regressor_task = (delayed(self._ARX_regressor_matrix)(X,y,input_idx,
-                                                                  X_cols,output_idx,
-                                                                  y_cols,segment)
-                              for segment in self.initial_intervals.keys()
-                              for input_idx in range(0,X.shape[1])
-                              for output_idx in range(0,y.shape[1]))
-        executor(arx_regressor_task)
+        if ((self.nx is not None) and (self.ny is not None)):
+
+            if self.verbose > 0:
+                print("Computing ARX Regressor Matrix...")
+
+            arx_regressor_task = (delayed(self._ARX_regressor_matrix)(X,y,input_idx,
+                                                                    X_cols,output_idx,
+                                                                    y_cols,segment)
+                                for segment in self.initial_intervals.keys()
+                                for input_idx in range(0,X.shape[1])
+                                for output_idx in range(0,y.shape[1]))
+            executor(arx_regressor_task)
         
-        if self.verbose > 0:
-            print("Performing QR-Decomposition...")
+            if self.verbose > 0:
+                print("Performing QR-Decomposition...")
+                
+            #Make QR_Factorization
+            cond_numb_task = (delayed(self._qr_factorization)(y,input_idx,X_cols,
+                                                            output_idx,y_cols,
+                                                            segment,"all")
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
+            executor(cond_numb_task)    
+        
+        if ((self.efr_type is not None) and (self.sv_thr is not None)):
+
+            if self.verbose > 0:
+                print("Computing Effective Rank...")
+                
+            #Compute the Effective Rank for each MISO system 
+            miso_ranks_task = (delayed(self._compute_ARX_miso_ranks)(X,y,input_idx,X_cols,output_idx,y_cols,segment)
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
             
-        #Make QR_Factorization
-        cond_numb_task = (delayed(self._qr_factorization)(y,input_idx,X_cols,
-                                                          output_idx,y_cols,
-                                                          segment,"all")
-                          for segment in self.initial_intervals.keys()
-                          for input_idx in range(0,X.shape[1])
-                          for output_idx in range(0,y.shape[1]))
-        executor(cond_numb_task)    
+            executor(miso_ranks_task)    
         
-        if self.verbose > 0:
-            print("Computing Effective Rank...")
+        if ((self.delay is not None) and (self.cc_alpha is not None)):
             
-        #Compute the Effective Rank for each MISO system 
-        miso_ranks_task = (delayed(self._compute_ARX_miso_ranks)(X,y,input_idx,X_cols,output_idx,y_cols,segment)
-                           for segment in self.initial_intervals.keys()
-                           for input_idx in range(0,X.shape[1])
-                           for output_idx in range(0,y.shape[1]))
-        
-        executor(miso_ranks_task)    
-        
-        if self.verbose > 0:
-            print("Computing Cross-Correlation Metric...")
-            
-        #Compute cross-correlation scalar metric for each MISO system
-        miso_corr_task = (delayed(self._compute_miso_correlations)(X,y,input_idx,
-                                                                   X_cols,output_idx,
-                                                                   y_cols,segment)
-                          for segment in self.initial_intervals.keys()
-                          for input_idx in range(0,X.shape[1])
-                          for output_idx in range(0,y.shape[1]))
-        executor(miso_corr_task)
+            if self.verbose > 0:
+                print("Computing Cross-Correlation Metric...")
+
+            #Compute cross-correlation scalar metric for each MISO system
+            miso_corr_task = (delayed(self._compute_miso_correlations)(X,y,input_idx,
+                                                                    X_cols,output_idx,
+                                                                    y_cols,segment)
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
+            executor(miso_corr_task)
         
         if self.verbose > 0:
             print("ARX fit finished!")
