@@ -5,7 +5,8 @@ data/*
 jupyters/*
 jupyter/*
 .DS_Store
-*/__pycache__
 datasets
 .pyc
 .xlsx
+.idea
+__pycache__
