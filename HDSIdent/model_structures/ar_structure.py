@@ -115,8 +115,173 @@ class ARStructure(ModelStructure):
                                  output_idx = output_idx,
                                  y_cols = y_cols,
                                  segment = segment)
-    
-    def fit(self, X, y):
+
+    def _closed_loop_fit(self, X, X_cols, y, y_cols, sp, sp_cols):
+        """
+        This function computes all the metrics under the optics of
+        a closed-loop system identification. The numerical conditioning
+        metrics are computed using the set-point. However, for metrics that
+        require an estimate of the model parameters (such as the chi-squared
+        test), the manipulated variable is used.
+        """
+        #Make an Parallel executor
+        executor = Parallel(require='sharedmem',
+                            n_jobs=self.n_jobs,
+                            verbose=self.verbose)
+
+        if self.ny is not None:
+
+            if self.verbose > 0:
+                print("Computing Laguerre Regressor Matrix Using Set-point...")
+
+            #Compute ARX Regressor Matrix With set-point
+            ar_regressor_task = (delayed(self._AR_regressor_matrix)(sp,y,self.ny,
+                                                                    input_idx,X_cols,
+                                                                    output_idx,y_cols,segment)
+                                for segment in self.initial_intervals.keys()
+                                for input_idx in range(0,X.shape[1])
+                                for output_idx in range(0,y.shape[1]))
+            executor(ar_regressor_task)
+
+            if self.verbose > 0:
+                print("Computing Condition Number with Set-point...")
+
+            #Compute Condition Number for the Set-point
+            cond_numb_task = (delayed(self._qr_factorization)(y,input_idx,
+                                                              X_cols,output_idx,
+                                                              y_cols,segment,
+                                                              'condition_number')
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
+            executor(cond_numb_task)  
+
+        if ((self.efr_type is not None) and (self.sv_thr is not None)):
+
+            if self.verbose > 0:
+                print("Computing Effective Rank Using Set-point...")
+
+            #Compute the Effective Rank for each MISO system with the Set-point
+            miso_ranks_task = (delayed(self._compute_AR_miso_ranks)(sp,y,input_idx,
+                                                                    X_cols,output_idx,
+                                                                    y_cols,segment)
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
+            
+            executor(miso_ranks_task)   
+
+        if ((self.delay is not None) and (self.cc_alpha is not None)):
+
+            if self.verbose > 0:
+                print("Computing Cross-correlation Using Set-point...")
+
+            #Compute cross-correlation scalar metric for each MISO system with the Set-point
+            miso_corr_task = (delayed(self._compute_miso_correlations)(sp,y,input_idx,
+                                                                       X_cols,output_idx,
+                                                                       y_cols,segment)
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
+            executor(miso_corr_task)
+
+        if self.ny is not None:
+
+            if self.verbose > 0:
+                print("Computing Chi-squared Test Using Manipulated Variable...")
+
+            #Compute ARX Regressor Matrix with manipulated variable
+            arx_regressor_task = (delayed(self._AR_regressor_matrix)(X,y,self.ny,
+                                                                     input_idx,X_cols,
+                                                                     output_idx,y_cols,segment)
+                                for segment in self.initial_intervals.keys()
+                                for input_idx in range(0,X.shape[1])
+                                for output_idx in range(0,y.shape[1]))
+            executor(arx_regressor_task)
+
+            #Make QR_Factorization (Condition Number and chi-squared Test)
+            cond_numb_task = (delayed(self._qr_factorization)(y,input_idx,
+                                                              X_cols,output_idx,
+                                                              y_cols,segment,
+                                                              'chi_squared_test')
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
+            executor(cond_numb_task) 
+
+    def _open_loop_fit(self, X, X_cols, y, y_cols):
+        """
+        This function computes all the metrics under the optics of
+        an open-loop system identification. Notice that if the system
+        is controlled by a PID, for example, you can still use this
+        function for evaluate the system using its set-point as the
+        input variable (which would still be an open-loop identification).
+        """
+
+        #Make an Parallel executor
+        executor = Parallel(require='sharedmem',
+                            n_jobs=self.n_jobs,
+                            verbose=self.verbose)
+        
+        if self.ny is not None:
+
+            if self.verbose > 0:
+                print("Computing AR Regressor Matrix...")
+                
+            #Compute ARX Regressor Matrix
+            ar_regressor_task = (delayed(self._AR_regressor_matrix)(X,y,self.ny,
+                                                                    input_idx,X_cols,
+                                                                    output_idx,y_cols,segment)
+                                for segment in self.initial_intervals.keys()
+                                for input_idx in range(0,X.shape[1])
+                                for output_idx in range(0,y.shape[1]))
+            executor(ar_regressor_task)
+            
+            if self.verbose > 0:
+                print("Performing QR-Decomposition...")
+                
+            #Make QR_Factorization
+            cond_numb_task = (delayed(self._qr_factorization)(y,input_idx,X_cols,
+                                                            output_idx,y_cols,
+                                                            segment,"all")
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
+            executor(cond_numb_task)    
+        
+        if ((self.efr_type is not None) and (self.sv_thr is not None)):
+
+            if self.verbose > 0:
+                print("Computing Effective Rank...")
+                
+            #Compute the Effective Rank for each MISO system 
+            miso_ranks_task = (delayed(self._compute_AR_miso_ranks)(X,y,input_idx,X_cols,
+                                                                    output_idx,y_cols,
+                                                                    segment)
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
+            
+            executor(miso_ranks_task)    
+        
+        if ((self.delay is not None) and (self.cc_alpha is not None)):
+
+            if self.verbose > 0:
+                print("Computing Cross-Correlation Metric...")
+                
+            #Compute cross-correlation scalar metric for each MISO system
+            miso_corr_task = (delayed(self._compute_miso_correlations)(X,y,input_idx,
+                                                                    X_cols,output_idx,
+                                                                    y_cols,segment)
+                            for segment in self.initial_intervals.keys()
+                            for input_idx in range(0,X.shape[1])
+                            for output_idx in range(0,y.shape[1]))
+            executor(miso_corr_task)
+            
+            if self.verbose > 0:
+                print("ARX fit finished!")
+
+    def fit(self, X, y, sp=None):
         """
         This function performs the following rotines:
             - Computes the AR Regressor Matrix for the given data;
@@ -136,6 +301,26 @@ class ARStructure(ModelStructure):
              self.cond_num_dict: the Condition Number for each (input/output) regressor, 
              self.chi_squared_dict: the chi-squared test for validating the estimated parameters)
         """
+        #Verify data format
+        X, y, X_cols, y_cols = self._verify_data(X,y)
+        if sp is not None:
+            sp, _, sp_cols, _ = self._verify_data(sp,y)
+
+        #Initialize Internal Variables
+        self._initialize_metrics(X,y,X_cols,y_cols)
+        
+        #Fit Laguerre Structure
+        if sp is not None:
+            if ((sp.shape[1] > 1) or (X.shape[1] > 1) or (y.shape[1] > 1)):
+                print("Closed-loop analysis only supported for SISO systems...")
+                return None
+            else:
+                self._closed_loop_fit(X, X_cols, y, y_cols, sp, sp_cols)
+        else:
+            self._open_loop_fit(X, X_cols, y, y_cols)
+            
+        return (self.miso_ranks, self.miso_correlations, self.cond_num_dict, self.chi_squared_dict)
+
         #Verify data format
         X, y, X_cols, y_cols = self._verify_data(X,y)
         

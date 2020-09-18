@@ -53,7 +53,8 @@ class MIMOStatistical(object):
                  alpha=0.01,
                  ks_critic = 1.25,
                  mean_delta = 0.05,
-                 insert_noise = True,
+                 insert_noise_sp = False,
+                 insert_noise_y = False,
                  compare_means=True,
                  min_input_coupling=1,
                  min_output_coupling=1,
@@ -65,7 +66,8 @@ class MIMOStatistical(object):
         self.ks_critic = ks_critic
         self.alpha = alpha
         self.mean_delta = mean_delta
-        self.insert_noise = insert_noise
+        self.insert_noise_sp = insert_noise_sp
+        self.insert_noise_y = insert_noise_y
         self.compare_means = compare_means
         self.min_input_coupling = min_input_coupling
         self.min_output_coupling = min_output_coupling
@@ -664,10 +666,16 @@ class MIMOStatistical(object):
         X, y, X_cols, y_cols = self._verify_data(X,y)
         
         #Insert Noise
-        X = self._insert_random_noise(data_segment=X,
-                                      noise_mean=0,
-                                      noise_std=self.noise_std)
+        if self.insert_noise_sp:
+            X = self._insert_random_noise(data_segment=X,
+                                        noise_mean=0,
+                                        noise_std=self.noise_std)
         
+        if self.insert_noise_y:
+            y = self._insert_random_noise(data_segment=y,
+                                        noise_mean=0,
+                                        noise_std=self.noise_std)
+
         #Initialize Indicating Sequences
         self._initialize_indicating_sequences(X=X, X_cols=X_cols, y=y, y_cols=y_cols)
         

@@ -26,7 +26,7 @@ class Preprocessing(object):
             
         self.scaler = scaler
         self.feature_range = feature_range
-        self.k = k
+        self.k = k  
         self.W = W
         self.N = N
         self.Ts = Ts

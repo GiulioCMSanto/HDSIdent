@@ -1,3 +1,4 @@
+import math
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
@@ -35,6 +36,7 @@ class ExponentialWeighted(object):
                  min_output_coupling=1,
                  num_previous_indexes=0,
                  min_interval_length=None,
+                 split_size=None,
                  n_jobs=-1, 
                  verbose=0):
 
@@ -47,6 +49,7 @@ class ExponentialWeighted(object):
         self.min_output_coupling = min_output_coupling
         self.num_previous_indexes = num_previous_indexes
         self.min_interval_length = min_interval_length
+        self.split_size = split_size
         self.n_jobs = n_jobs
         self.verbose = verbose
         
@@ -410,6 +413,24 @@ class ExponentialWeighted(object):
         
         return final_intervals
 
+    def _split_data(self):
+        """
+        """
+        final_intervals = {}
+        divided_intervals = []
+
+        for key, value in self.unified_intervals.items():
+            if len(value) < self.split_size:
+                divided_intervals.append(value)
+            else:
+                divided_intervals+=list(np.array_split(np.array(value),
+                                        math.ceil(len(value)/self.split_size)))   
+
+        for key, interval in enumerate(divided_intervals):
+            final_intervals[key] = list(interval)
+        
+        return final_intervals
+
     def fit(self, X, y):
         """
         This function performs the following routines:
@@ -468,6 +489,10 @@ class ExponentialWeighted(object):
         if ((self.min_interval_length is not None) and 
             (self.min_interval_length > 1)):
             self.unified_intervals = self._length_check()
+
+        #Split Long Data 
+        if self.split_size:
+            self.unified_intervals = self._split_data()
 
         return self.unified_intervals
             
