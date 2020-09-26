@@ -1,7 +1,6 @@
 from HDSIdent.model_structures.model_structures import ModelStructure
 
 import numpy as np
-import pandas as pd
 from joblib import Parallel, delayed
 
 class ARStructure(ModelStructure):
@@ -228,7 +227,7 @@ class ARStructure(ModelStructure):
             if self.verbose > 0:
                 print("Computing AR Regressor Matrix...")
                 
-            #Compute ARX Regressor Matrix
+            #Compute AR Regressor Matrix
             ar_regressor_task = (delayed(self._AR_regressor_matrix)(X,y,self.ny,
                                                                     input_idx,X_cols,
                                                                     output_idx,y_cols,segment)
@@ -242,8 +241,8 @@ class ARStructure(ModelStructure):
                 
             #Make QR_Factorization
             cond_numb_task = (delayed(self._qr_factorization)(y,input_idx,X_cols,
-                                                            output_idx,y_cols,
-                                                            segment,"all")
+                                                              output_idx,y_cols,
+                                                              segment,"all")
                             for segment in self.initial_intervals.keys()
                             for input_idx in range(0,X.shape[1])
                             for output_idx in range(0,y.shape[1]))
@@ -309,7 +308,7 @@ class ARStructure(ModelStructure):
         #Initialize Internal Variables
         self._initialize_metrics(X,y,X_cols,y_cols)
         
-        #Fit Laguerre Structure
+        #Fit AR Structure
         if sp is not None:
             if ((sp.shape[1] > 1) or (X.shape[1] > 1) or (y.shape[1] > 1)):
                 print("Closed-loop analysis only supported for SISO systems...")
