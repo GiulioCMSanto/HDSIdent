@@ -12,5 +12,5 @@ setuptools.setup(
     install_requires=["scikit-learn","scipy",
                       "pandas","numpy","matplotlib",
                       "seaborn","joblib","sympy"],
-    zip_safe=False
+    zip_safe=True
 )
