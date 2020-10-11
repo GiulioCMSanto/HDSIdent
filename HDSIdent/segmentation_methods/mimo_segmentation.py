@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from copy import deepcopy
 from scipy.stats import chi2
 from collections import defaultdict

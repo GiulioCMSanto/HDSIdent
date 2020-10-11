@@ -1,7 +1,6 @@
 from HDSIdent.model_structures.model_structures import ModelStructure
 
 import numpy as np
-import pandas as pd
 from joblib import Parallel, delayed
 
 class ARXStructure(ModelStructure):

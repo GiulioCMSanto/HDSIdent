@@ -1,7 +1,6 @@
 import math
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
 from collections import defaultdict
 from joblib import Parallel, delayed
 
@@ -9,7 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set_style('darkgrid')
 
-class ExponentialWeighted(object):
+class ExponentiallyWeighted(object):
     """
     Exponential Moving Average Control Chart. Performs a
     recursive moving average filter and detects

@@ -1,10 +1,7 @@
 from HDSIdent.model_structures.model_structures import ModelStructure
 from sympy import symbols, poly, expand
-from numpy.linalg import cond, qr, norm
 from joblib import Parallel, delayed
-from collections import defaultdict
 from scipy import signal
-import pandas as pd
 import numpy as np
 
 class LaguerreStructure(ModelStructure):
