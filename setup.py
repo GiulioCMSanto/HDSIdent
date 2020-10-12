@@ -4,7 +4,7 @@ setuptools.setup(
     author="Giulio Cesare Mastrocinque Santo",
     name='HDSIdent',
     author_email="giuliosanto@gmail.com",
-    version='0.0.1',
+    version='0.0.1.1',
     description='HDSIdent is an open-source Python package that can be used to obtain historical data segments suitable for performing System Identification',
     license="MIT",
     packages=setuptools.find_packages(),

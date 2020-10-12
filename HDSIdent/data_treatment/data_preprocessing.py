@@ -15,13 +15,28 @@ class Preprocessing(object):
         - Butterworth low-pass filtering.
     
     Arguments:
-        scaler: the scaler type to be used
-        feature_range: the feature range as a tuple (min, max)
-        k: the number of initial samples to be removed
-        W: input frequency
-        N: Butterworth filter order
-        Ts: the sampling frequency of the digital filter (Default = 1.0 seconds)
+        scaler: the sklearn scaler type to be used (MinMaxScaler or StandardScaler);
+        feature_range: the normalization feature range as a tuple (min, max);
+        k: the number of initial samples to be removed;
+        W: the input cut-off frequencies as a list [wmin, wmax];
+        N: Butterworth filter order;
+        Ts: the sampling frequency of the digital filter (Default = 1.0 seconds)/
+
+    Reference works:
+        PERETZKI, D. et al. Data mining of historic data for process identification.
+        In: Proceedings of the 2011 AIChE Annual Meeting, p. 1027–1033, 2011.
+
+        BITTENCOURT, A. C. et al. An algorithm for finding process identification
+        intervals from normal operating data. Processes, v. 3, p. 357–383, 2015.
+
+        PATEL, A. Data Mining of Process Data in Mutlivariable Systems.
+        Degree project in electrical engineering — Royal Institute of Technology,
+        Stockholm, Sweden, 2016.
+
+        FACELI, K. et al. Inteligência Artificial: Uma Abordagem de Aprendizado de
+        Máquina. Rio de Janeiro, Brasil: LTC, 2017. (In portuguese)
     """
+
     def __init__(self, scaler='StandardScaler', feature_range = (0,1), k=10, W=None, N=1, Ts=1):
             
         self.scaler = scaler
@@ -196,3 +211,92 @@ class Preprocessing(object):
             y_aux.columns = y_cols
             
         return X_aux, y_aux
+
+#See below the used libraries Licenses
+#-------------------------------------
+
+#Scikit-learn license
+#--------------------
+
+# Copyright (c) 2007-2020 The scikit-learn developers.
+# All rights reserved.
+
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the copyright holder nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+
+#Scipy license
+#-------------
+
+# Copyright (c) 2001-2002 Enthought, Inc.  2003-2019, SciPy Developers.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+#    copyright notice, this list of conditions and the following
+#    disclaimer in the documentation and/or other materials provided
+#    with the distribution.
+#
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+
+#Pandas license
+#--------------
+
+# Copyright (c) 2008-2011, AQR Capital Management, LLC, Lambda Foundry, Inc. and PyData Development Team
+# All rights reserved.
+#
+# Copyright (c) 2011-2020, Open source contributors.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the copyright holder nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+
+#Numpy license
+#-------------
+
+# Copyright (c) 2005-2020, NumPy Developers.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+# * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above
+#    copyright notice, this list of conditions and the following
+#    disclaimer in the documentation and/or other materials provided
+#    with the distribution.
+#
+# * Neither the name of the NumPy Developers nor the names of any
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.

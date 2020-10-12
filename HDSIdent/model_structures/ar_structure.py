@@ -26,6 +26,11 @@ class ARStructure(ModelStructure):
         sv_thr: singular value threshold for computing the effective rank
         n_jobs: the number of CPUs to use
         verbose: the degree of verbosity (from 0 to 10)
+
+    Reference works:
+        AGUIRRE, L. A. Introdução à Identificação de Sistemas:
+        técnicas lineares e não lineares: teoria e aplicação. 4. ed.
+        Belo Horizonte, Brasil: Editora UFMG, 2015.
     """   
     def __init__(self,
                  ny,
@@ -374,3 +379,48 @@ class ARStructure(ModelStructure):
             print("AR fit finished!")
             
         return (self.miso_ranks, self.miso_correlations, self.cond_num_dict, self.chi_squared_dict)
+
+#See below the used libraries Licenses
+#-------------------------------------
+
+#Joblib license
+#--------------
+
+# Copyright (c) 2008-2016, The joblib developers.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the copyright holder nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+
+#Numpy license
+#-------------
+
+# Copyright (c) 2005-2020, NumPy Developers.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+# * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above
+#    copyright notice, this list of conditions and the following
+#    disclaimer in the documentation and/or other materials provided
+#    with the distribution.
+#
+# * Neither the name of the NumPy Developers nor the names of any
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.

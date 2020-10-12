@@ -24,6 +24,17 @@ class ExponentiallyWeighted(object):
         normalize: whether or not to normalized the data (StandardScaler)
         verbose: verbose level as in joblib library
         n_jobs: the number of threads as in joblib library
+
+    Reference works:
+        PERETZKI, D. et al. Data mining of historic data for process identification.
+        In: Proceedings of the 2011 AIChE Annual Meeting, p. 1027–1033, 2011.
+
+        BITTENCOURT, A. C. et al. An algorithm for finding process identification
+        intervals from normal operating data. Processes, v. 3, p. 357–383, 2015.
+
+        WANG, J. et al. Searching historical data segments for process
+        identification in feedback control loops. Computers and Chemical
+        Engineering, v. 112, n. 6, p. 6–16, 2018.
     """
     def __init__(self,
                  forgetting_fact_v, 
@@ -553,3 +564,193 @@ class ExponentiallyWeighted(object):
                         plt.scatter(idx, self._mu_k_arr[:,col][idx], marker='x', s=50, color=color_arr[color_rule], zorder=2)
                         plt.axvline(x=idx, linestyle='--', color=color_arr[color_rule])
             plt.show()
+
+#See below the used libraries Licenses
+#-------------------------------------
+
+#Joblib license
+#--------------
+
+# Copyright (c) 2008-2016, The joblib developers.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the copyright holder nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+
+#Pandas license
+#--------------
+
+# Copyright (c) 2008-2011, AQR Capital Management, LLC, Lambda Foundry, Inc. and PyData Development Team
+# All rights reserved.
+#
+# Copyright (c) 2011-2020, Open source contributors.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the copyright holder nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+
+#Numpy license
+#-------------
+
+# Copyright (c) 2005-2020, NumPy Developers.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+# * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above
+#    copyright notice, this list of conditions and the following
+#    disclaimer in the documentation and/or other materials provided
+#    with the distribution.
+#
+# * Neither the name of the NumPy Developers nor the names of any
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+
+#Matplotlib licence
+#------------------
+
+# License agreement for matplotlib versions 1.3.0 and later
+# =========================================================
+#
+# 1. This LICENSE AGREEMENT is between the Matplotlib Development Team
+# ("MDT"), and the Individual or Organization ("Licensee") accessing and
+# otherwise using matplotlib software in source or binary form and its
+# associated documentation.
+#
+# 2. Subject to the terms and conditions of this License Agreement, MDT
+# hereby grants Licensee a nonexclusive, royalty-free, world-wide license
+# to reproduce, analyze, test, perform and/or display publicly, prepare
+# derivative works, distribute, and otherwise use matplotlib
+# alone or in any derivative version, provided, however, that MDT's
+# License Agreement and MDT's notice of copyright, i.e., "Copyright (c)
+# 2012- Matplotlib Development Team; All Rights Reserved" are retained in
+# matplotlib  alone or in any derivative version prepared by
+# Licensee.
+#
+# 3. In the event Licensee prepares a derivative work that is based on or
+# incorporates matplotlib or any part thereof, and wants to
+# make the derivative work available to others as provided herein, then
+# Licensee hereby agrees to include in any such work a brief summary of
+# the changes made to matplotlib .
+#
+# 4. MDT is making matplotlib available to Licensee on an "AS
+# IS" basis.  MDT MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR
+# IMPLIED.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, MDT MAKES NO AND
+# DISCLAIMS ANY REPRESENTATION OR WARRANTY OF MERCHANTABILITY OR FITNESS
+# FOR ANY PARTICULAR PURPOSE OR THAT THE USE OF MATPLOTLIB
+# WILL NOT INFRINGE ANY THIRD PARTY RIGHTS.
+#
+# 5. MDT SHALL NOT BE LIABLE TO LICENSEE OR ANY OTHER USERS OF MATPLOTLIB
+#  FOR ANY INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES OR
+# LOSS AS A RESULT OF MODIFYING, DISTRIBUTING, OR OTHERWISE USING
+# MATPLOTLIB , OR ANY DERIVATIVE THEREOF, EVEN IF ADVISED OF
+# THE POSSIBILITY THEREOF.
+#
+# 6. This License Agreement will automatically terminate upon a material
+# breach of its terms and conditions.
+#
+# 7. Nothing in this License Agreement shall be deemed to create any
+# relationship of agency, partnership, or joint venture between MDT and
+# Licensee.  This License Agreement does not grant permission to use MDT
+# trademarks or trade name in a trademark sense to endorse or promote
+# products or services of Licensee, or any third party.
+#
+# 8. By copying, installing or otherwise using matplotlib ,
+# Licensee agrees to be bound by the terms and conditions of this License
+# Agreement.
+#
+# License agreement for matplotlib versions prior to 1.3.0
+# ========================================================
+#
+# 1. This LICENSE AGREEMENT is between John D. Hunter ("JDH"), and the
+# Individual or Organization ("Licensee") accessing and otherwise using
+# matplotlib software in source or binary form and its associated
+# documentation.
+#
+# 2. Subject to the terms and conditions of this License Agreement, JDH
+# hereby grants Licensee a nonexclusive, royalty-free, world-wide license
+# to reproduce, analyze, test, perform and/or display publicly, prepare
+# derivative works, distribute, and otherwise use matplotlib
+# alone or in any derivative version, provided, however, that JDH's
+# License Agreement and JDH's notice of copyright, i.e., "Copyright (c)
+# 2002-2011 John D. Hunter; All Rights Reserved" are retained in
+# matplotlib  alone or in any derivative version prepared by
+# Licensee.
+#
+# 3. In the event Licensee prepares a derivative work that is based on or
+# incorporates matplotlib  or any part thereof, and wants to
+# make the derivative work available to others as provided herein, then
+# Licensee hereby agrees to include in any such work a brief summary of
+# the changes made to matplotlib.
+#
+# 4. JDH is making matplotlib  available to Licensee on an "AS
+# IS" basis.  JDH MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR
+# IMPLIED.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, JDH MAKES NO AND
+# DISCLAIMS ANY REPRESENTATION OR WARRANTY OF MERCHANTABILITY OR FITNESS
+# FOR ANY PARTICULAR PURPOSE OR THAT THE USE OF MATPLOTLIB
+# WILL NOT INFRINGE ANY THIRD PARTY RIGHTS.
+#
+# 5. JDH SHALL NOT BE LIABLE TO LICENSEE OR ANY OTHER USERS OF MATPLOTLIB
+#  FOR ANY INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES OR
+# LOSS AS A RESULT OF MODIFYING, DISTRIBUTING, OR OTHERWISE USING
+# MATPLOTLIB , OR ANY DERIVATIVE THEREOF, EVEN IF ADVISED OF
+# THE POSSIBILITY THEREOF.
+#
+# 6. This License Agreement will automatically terminate upon a material
+# breach of its terms and conditions.
+#
+# 7. Nothing in this License Agreement shall be deemed to create any
+# relationship of agency, partnership, or joint venture between JDH and
+# Licensee.  This License Agreement does not grant permission to use JDH
+# trademarks or trade name in a trademark sense to endorse or promote
+# products or services of Licensee, or any third party.
+#
+# 8. By copying, installing or otherwise using matplotlib,
+# Licensee agrees to be bound by the terms and conditions of this License
+# Agreement.
+
+#Seaborn license
+#---------------
+
+# Copyright (c) 2012-2020, Michael L. Waskom
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the project nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.

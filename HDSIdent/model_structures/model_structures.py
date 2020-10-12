@@ -10,6 +10,35 @@ class ModelStructure(object):
     used for a variety of model structures used in
     System Identification. This class is used as a 
     father class for model structure classes.
+
+    Reference works:
+        PERETZKI, D. et al. Data mining of historic data for process identification.
+        In: Proceedings of the 2011 AIChE Annual Meeting, p. 1027–1033, 2011.
+
+        SHARDT, Y. A. W.; SHAH, S. L. Segmentation Methods for Model Identification from
+        Historical Process Data. In: Proceedings of the 19th World Congress.
+        Cape Town, South Africa: IFAC, 2014. p. 2836–2841.
+
+        AGUIRRE, L. A. Introdução à Identificação de Sistemas:
+        técnicas lineares e não lineares: teoria e aplicação. 4. ed.
+        Belo Horizonte, Brasil: Editora UFMG, 2015.
+
+        BITTENCOURT, A. C. et al. An algorithm for finding process identification
+        intervals from normal operating data. Processes, v. 3, p. 357–383, 2015.
+
+        PATEL, A. Data Mining of Process Data in Mutlivariable Systems.
+        Degree project in electrical engineering — Royal Institute of Technology,
+        Stockholm, Sweden, 2016.
+
+        ARENGAS, D.; KROLL, A. A Search Method for Selecting Informative Data in Predominantly
+        Stationary Historical Records for Multivariable System Identification.
+        In: Proceedings of the 21st International Conference on System Theory,
+        Control and Computing (ICSTCC). Sinaia, Romenia: IEEE, 2017a. p. 100–105.
+
+        ARENGAS, D.; KROLL, A. Searching for informative intervals in predominantly stationary
+        data records to support system identification. In: Proceedings of the XXVI International
+        Conference on Information, Communication and Automation Technologies (ICAT). Sarajevo,
+        Bosnia-Herzegovina: IEEE, 2017b.
     """
     def __init__(self):
         pass
