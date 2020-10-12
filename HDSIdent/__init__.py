@@ -1,5 +1,3 @@
-__version__ = "0.0.1.1"
-
 from HDSIdent.data_treatment.data_preprocessing import Preprocessing
 from HDSIdent.initial_intervals.bandpass_filter import BandpassFilter
 from HDSIdent.initial_intervals.exponentially_weighted import ExponentiallyWeighted
