@@ -1,4 +1,5 @@
 from pytest import fixture
+import pytest
 import numpy as np
 import pandas as pd
 from HDSIdent.utils.utils import verify_data
@@ -156,8 +157,8 @@ def test_verify_data(dataframe_sample_1,
     assert y_cols == None
 
     #Case 7: SISO List
-    try:
+    with pytest.raises(Exception) as context:
         X, y, X_cols, y_cols = verify_data(list_sample[0],
                                            list_sample[1])
-    except Exception as e:
-        assert e.args[0] == "Input data must be a pandas dataframe or a numpy array"
+
+    assert context.value.args[0] == "Input data must be a pandas dataframe or a numpy array"

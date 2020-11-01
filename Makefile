@@ -7,3 +7,7 @@ environment:
 .PHONY: requirements
 requirements:
 	pip install -r requirements.txt
+
+.PHONY: tests
+tests:
+	python -m pytest tests
