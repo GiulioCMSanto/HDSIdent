@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Coverage report</title>
+    <link rel="stylesheet" href="style.css" type="text/css">
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript" src="jquery.ba-throttle-debounce.min.js"></script>
+    <script type="text/javascript" src="jquery.tablesorter.min.js"></script>
+    <script type="text/javascript" src="jquery.hotkeys.js"></script>
+    <script type="text/javascript" src="coverage_html.js"></script>
+    <script type="text/javascript">
+        jQuery(document).ready(coverage.index_ready);
+    </script>
+</head>
+<body class="indexfile">
+<div id="header">
+    <div class="content">
+        <h1>Coverage report:
+            <span class="pc_cov">15%</span>
+        </h1>
+        <img id="keyboard_icon" src="keybd_closed.png" alt="Show keyboard shortcuts" />
+        <form id="filter_container">
+            <input id="filter" type="text" value="" placeholder="filter..." />
+        </form>
+    </div>
+</div>
+<div class="help_panel">
+    <img id="panel_icon" src="keybd_open.png" alt="Hide keyboard shortcuts" />
+    <p class="legend">Hot-keys on this page</p>
+    <div>
+    <p class="keyhelp">
+        <span class="key">n</span>
+        <span class="key">s</span>
+        <span class="key">m</span>
+        <span class="key">x</span>
+        <span class="key">c</span> &nbsp; change column sorting
+    </p>
+    </div>
+</div>
+<div id="index">
+    <table class="index">
+        <thead>
+            <tr class="tablehead" title="Click to sort">
+                <th class="name left headerSortDown shortkey_n">Module</th>
+                <th class="shortkey_s">statements</th>
+                <th class="shortkey_m">missing</th>
+                <th class="shortkey_x">excluded</th>
+                <th class="right shortkey_c">coverage</th>
+            </tr>
+        </thead>
+        <tfoot>
+            <tr class="total">
+                <td class="name left">Total</td>
+                <td>1809</td>
+                <td>1530</td>
+                <td>0</td>
+                <td class="right" data-ratio="279 1809">15%</td>
+            </tr>
+        </tfoot>
+        <tbody>
+            <tr class="file">
+                <td class="name left"><a href="HDSIdent___init___py.html">HDSIdent/__init__.py</a></td>
+                <td>10</td>
+                <td>0</td>
+                <td>0</td>
+                <td class="right" data-ratio="10 10">100%</td>
+            </tr>
+            <tr class="file">
+                <td class="name left"><a href="HDSIdent_data_treatment_data_preprocessing_py.html">HDSIdent/data_treatment/data_preprocessing.py</a></td>
+                <td>67</td>
+                <td>1</td>
+                <td>0</td>
+                <td class="right" data-ratio="66 67">99%</td>
+            </tr>
+            <tr class="file">
+                <td class="name left"><a href="HDSIdent_initial_intervals_bandpass_filter_py.html">HDSIdent/initial_intervals/bandpass_filter.py</a></td>
+                <td>194</td>
+                <td>173</td>
+                <td>0</td>
+                <td class="right" data-ratio="21 194">11%</td>
+            </tr>
+            <tr class="file">
+                <td class="name left"><a href="HDSIdent_initial_intervals_exponentially_weighted_py.html">HDSIdent/initial_intervals/exponentially_weighted.py</a></td>
+                <td>249</td>
+                <td>224</td>
+                <td>0</td>
+                <td class="right" data-ratio="25 249">10%</td>
+            </tr>
+            <tr class="file">
+                <td class="name left"><a href="HDSIdent_initial_intervals_non_parametric_pettitt_py.html">HDSIdent/initial_intervals/non_parametric_pettitt.py</a></td>
+                <td>189</td>
+                <td>165</td>
+                <td>0</td>
+                <td class="right" data-ratio="24 189">13%</td>
+            </tr>
+            <tr class="file">
+                <td class="name left"><a href="HDSIdent_initial_intervals_sliding_window_py.html">HDSIdent/initial_intervals/sliding_window.py</a></td>
+                <td>145</td>
+                <td>130</td>
+                <td>0</td>
+                <td class="right" data-ratio="15 145">10%</td>
+            </tr>
+            <tr class="file">
+                <td class="name left"><a href="HDSIdent_model_structures_ar_structure_py.html">HDSIdent/model_structures/ar_structure.py</a></td>
+                <td>106</td>
+                <td>96</td>
+                <td>0</td>
+                <td class="right" data-ratio="10 106">9%</td>
+            </tr>
+            <tr class="file">
+                <td class="name left"><a href="HDSIdent_model_structures_arx_structure_py.html">HDSIdent/model_structures/arx_structure.py</a></td>
+                <td>93</td>
+                <td>83</td>
+                <td>0</td>
+                <td class="right" data-ratio="10 93">11%</td>
+            </tr>
+            <tr class="file">
+                <td class="name left"><a href="HDSIdent_model_structures_laguerre_filter_py.html">HDSIdent/model_structures/laguerre_filter.py</a></td>
+                <td>104</td>
+                <td>91</td>
+                <td>0</td>
+                <td class="right" data-ratio="13 104">12%</td>
+            </tr>
+            <tr class="file">
+                <td class="name left"><a href="HDSIdent_model_structures_model_structures_py.html">HDSIdent/model_structures/model_structures.py</a></td>
+                <td>131</td>
+                <td>113</td>
+                <td>0</td>
+                <td class="right" data-ratio="18 131">14%</td>
+            </tr>
+            <tr class="file">
+                <td class="name left"><a href="HDSIdent_segmentation_methods_mimo_segmentation_py.html">HDSIdent/segmentation_methods/mimo_segmentation.py</a></td>
+                <td>261</td>
+                <td>242</td>
+                <td>0</td>
+                <td class="right" data-ratio="19 261">7%</td>
+            </tr>
+            <tr class="file">
+                <td class="name left"><a href="HDSIdent_segmentation_methods_statistical_segmentation_py.html">HDSIdent/segmentation_methods/statistical_segmentation.py</a></td>
+                <td>234</td>
+                <td>209</td>
+                <td>0</td>
+                <td class="right" data-ratio="25 234">11%</td>
+            </tr>
+            <tr class="file">
+                <td class="name left"><a href="HDSIdent_utils_utils_py.html">HDSIdent/utils/utils.py</a></td>
+                <td>26</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="right" data-ratio="23 26">88%</td>
+            </tr>
+        </tbody>
+    </table>
+    <p id="no_rows">
+        No items found using the specified filter.
+    </p>
+</div>
+<div id="footer">
+    <div class="content">
+        <p>
+            <a class="nav" href="https://coverage.readthedocs.io">coverage.py v5.3</a>,
+            created at 2020-11-01 16:26 -0300
+        </p>
+    </div>
+</div>
+</body>
+</html>

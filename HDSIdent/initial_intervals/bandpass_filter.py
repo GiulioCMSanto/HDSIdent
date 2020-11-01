@@ -1,3 +1,4 @@
+from HDSIdent.utils.utils import verify_data
 import pandas as pd
 import numpy as np
 from scipy import signal
@@ -61,47 +62,6 @@ class BandpassFilter(object):
         self.min_interval_length = min_interval_length
         self.n_jobs = n_jobs
         self.verbose = verbose
-
-    def _verify_data(self, X, y):
-        """
-        Verifies the data type and save data columns
-        in case they are provided.
-
-        Arguments:
-            X: the input data in pandas dataframe format or numpy array
-            y: the output data in pandas dataframe format or numpy array
-
-        Output:
-            X: the input data in numpy array format
-            y: the input data in numpy array format
-            X_cols: the input data columns in case they are provided
-            y_cols: the output data columns in case they are provided
-        """
-        if type(X) == pd.core.frame.DataFrame:
-            X_cols = X.columns
-            X = X.values
-            if X.ndim == 1:
-                X = X.reshape(-1, 1)
-        elif type(X) == np.ndarray:
-            X_cols = None
-            if X.ndim == 1:
-                X = X.reshape(-1, 1)
-        else:
-            raise Exception("Input data must be a pandas dataframe or a numpy array")
-
-        if type(y) == pd.core.frame.DataFrame:
-            y_cols = y.columns
-            y = y.values
-            if y.ndim == 1:
-                y = y.reshape(-1, 1)
-        elif type(y) == np.ndarray:
-            y_cols = None
-            if y.ndim == 1:
-                y = y.reshape(-1, 1)
-        else:
-            raise Exception("Input data must be a pandas dataframe or a numpy array")
-
-        return X, y, X_cols, y_cols
 
     def _initialize_internal_variables(self, X):
         """
@@ -398,7 +358,7 @@ class BandpassFilter(object):
             - From the indicating sequence, creates a final unified interval
         """
         # Verify data format
-        X, y, X_cols, y_cols = self._verify_data(X, y)
+        X, y, X_cols, y_cols = verify_data(X, y)
 
         if (X_cols is not None) and (y_cols is not None):
             data_cols = list(X_cols) + list(y_cols)
@@ -458,7 +418,7 @@ class BandpassFilter(object):
         intervals.
         """
         # Verify data format
-        X, y, X_cols, y_cols = self._verify_data(X, y)
+        X, y, X_cols, y_cols = verify_data(X, y)
 
         if (X_cols is not None) and (y_cols is not None):
             df_cols = list(X_cols) + list(y_cols)
