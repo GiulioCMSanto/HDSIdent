@@ -3,8 +3,10 @@ import numpy as np
 from typing import Union
 from typing import Tuple
 
-def verify_data(X: Union[pd.DataFrame, np.array],
-                y: Union[pd.DataFrame, np.array]) -> Tuple[np.array, np.array, list, list]:
+
+def verify_data(
+    X: Union[pd.DataFrame, np.array], y: Union[pd.DataFrame, np.array]
+) -> Tuple[np.array, np.array, list, list]:
     """
     Verifies the data type and save data columns
     in case they are provided.
