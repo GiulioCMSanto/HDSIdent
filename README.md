@@ -11,7 +11,7 @@ This library is licensed under the [MIT license](https://github.com/GiulioCMSant
 ```pip install HDSIdent```
 
 #### Code Examples
-One can find code examples in the **notebooks/** folder. 
+One can find code examples in the [**notebooks/**](https://github.com/GiulioCMSanto/HDSIdent/tree/master/notebooks) folder. 
 
 There are two main ways of reproducing the provided notebooks:
 
