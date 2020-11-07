@@ -5,7 +5,7 @@ This library was created as part of my Master's degree dissertation and it can b
 **Dissertation work**: [Not yet published]
 
 #### Licensing
-This library is licensed under the MIT license.
+This library is licensed under the [MIT license](https://github.com/GiulioCMSanto/HDSIdent/blob/master/LICENSE).
 
 #### How to install it
 ```pip install HDSIdent```
