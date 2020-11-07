@@ -8,7 +8,7 @@ This library was created as part of my Master's degree dissertation and it can b
 This library is licensed under the [MIT license](https://github.com/GiulioCMSanto/HDSIdent/blob/master/LICENSE).
 
 #### How to install it
-```pip install HDSIdent```
+```pip3 install HDSIdent```
 
 #### Code Examples
 One can find code examples in the [**notebooks/**](https://github.com/GiulioCMSanto/HDSIdent/tree/master/notebooks) folder. 
