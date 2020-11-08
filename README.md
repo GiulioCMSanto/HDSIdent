@@ -22,11 +22,11 @@ There are two main ways of reproducing the provided notebooks:
 ### Related Libraries
 **HDSIdent** uses the following open-source libraries:
 
-- scikit-learn
-- scipy
-- pandas
-- numpy
-- matplotlib
-- seaborn
-- joblib
-- sympy
+- [scikit-learn](https://github.com/scikit-learn/scikit-learn/blob/master/COPYING)
+- [scipy](https://github.com/scipy/scipy/blob/master/LICENSE.txt)
+- [pandas](https://github.com/pandas-dev/pandas/blob/master/LICENSE)
+- [numpy](https://github.com/numpy/numpy/blob/master/LICENSE.txt)
+- [matplotlib](https://github.com/matplotlib/matplotlib/blob/master/LICENSE/LICENSE)
+- [seaborn](https://github.com/mwaskom/seaborn/blob/master/LICENSE)
+- [joblib](https://github.com/joblib/joblib/blob/master/LICENSE.txt)
+- [sympy](https://github.com/sympy/sympy/blob/master/LICENSE)
