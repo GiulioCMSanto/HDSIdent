@@ -4,13 +4,13 @@ This library was created as part of my Master's degree dissertation and it can b
 
 **Dissertation work**: [Not yet published]
 
-#### Licensing
+### Licensing
 This library is licensed under the [MIT license](https://github.com/GiulioCMSanto/HDSIdent/blob/master/LICENSE).
 
-#### How to install it
+### How to install the library
 ```pip3 install HDSIdent```
 
-#### Code Examples
+### Code Examples
 One can find code examples in the [**notebooks/**](https://github.com/GiulioCMSanto/HDSIdent/tree/master/notebooks) folder. 
 
 There are two main ways of reproducing the provided notebooks:
@@ -19,7 +19,7 @@ There are two main ways of reproducing the provided notebooks:
 
 2) You can download the notebook and run it locally (don't forget to install the library through ```pip install HDSIdent```)
 
-#### Related Libraries
+### Related Libraries
 **HDSIdent** uses the following open-source libraries:
 
 - scikit-learn
