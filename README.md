@@ -4,7 +4,8 @@ This library can be used to identify intervals suitable for System Identificatio
 
 **How to reference this work**:
 ```
-SANTO, G. C. M. Data Mining Techniques Applied to Historical Data of Industrial Processes as a Tool to Find Time Intervals Suitable for System Identification. Dissertação (Mestrado) – Escola Politécnica da Universidade de São Paulo, São Paulo, Brasil, 2020.
+SANTO, G. C. M. Data Mining Techniques Applied to Historical Data of Industrial Processes as a Tool to Find Time Intervals 
+Suitable for System Identification. Dissertação (Mestrado) – Escola Politécnica da Universidade de São Paulo, São Paulo, Brasil, 2020.
 ```
 
 Please see the Reference section to verify the related works.
