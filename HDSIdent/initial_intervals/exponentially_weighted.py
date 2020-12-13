@@ -27,13 +27,14 @@ class ExponentiallyWeighted(object):
         verbose: verbose level as in joblib library
         n_jobs: the number of threads as in joblib library
 
-    Reference works:
+    This method is proposed in the following works:
         PERETZKI, D. et al. Data mining of historic data for process identification.
         In: Proceedings of the 2011 AIChE Annual Meeting, p. 1027–1033, 2011.
 
         BITTENCOURT, A. C. et al. An algorithm for finding process identification
         intervals from normal operating data. Processes, v. 3, p. 357–383, 2015.
 
+    Ideas of the following work are also considered:
         WANG, J. et al. Searching historical data segments for process
         identification in feedback control loops. Computers and Chemical
         Engineering, v. 112, n. 6, p. 6–16, 2018.

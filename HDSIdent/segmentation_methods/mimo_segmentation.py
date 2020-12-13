@@ -23,6 +23,10 @@ class MIMOSegmentation(object):
     BITTENCOURT, A. C. et al. An algorithm for finding process identification
     intervals from normal operating data. Processes, v. 3, p. 357–383, 2015.
 
+    RIBEIRO, A. H.; AGUIRRE, L. A. Selecting transients automatically
+    for the identification of models for an oil well. IFAC-PapersOnLine,
+    v. 48, n. 6, p. 154–158, 2015.
+
     PATEL, A. Data Mining of Process Data in Mutlivariable Systems.
     Degree project in electrical engineering — Royal Institute of Technology,
     Stockholm, Sweden, 2016.
