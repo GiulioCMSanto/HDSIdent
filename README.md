@@ -9,7 +9,7 @@ as a Tool to Find Time Intervals Suitable for System Identification. Dissertaç�
 Escola Politécnica da Universidade de São Paulo, São Paulo, Brasil, 2020.
 ```
 
-Please see the Reference section to verify the related works.
+Please see the **References** section to verify the related works.
 
 ### Licensing
 This library is licensed under the [MIT license](https://github.com/GiulioCMSanto/HDSIdent/blob/master/LICENSE).
