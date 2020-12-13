@@ -28,10 +28,24 @@ class ARStructure(ModelStructure):
         n_jobs: the number of CPUs to use
         verbose: the degree of verbosity (from 0 to 10)
 
-    Reference works:
+    -------------------------------------------- REFERENCES --------------------------------------------
+    Reference used for the AR structure:
+
         AGUIRRE, L. A. Introdução à Identificação de Sistemas:
         técnicas lineares e não lineares: teoria e aplicação. 4. ed.
         Belo Horizonte, Brasil: Editora UFMG, 2015.
+
+    The methods implemented in this class were based in the following references:
+
+        PERETZKI, D. et al. Data mining of historic data for process identification.
+        In: Proceedings of the 2011 AIChE Annual Meeting, p. 1027–1033, 2011.
+
+        BITTENCOURT, A. C. et al. An algorithm for finding process identification
+        intervals from normal operating data. Processes, v. 3, p. 357–383, 2015.
+
+        RIBEIRO, A. H.; AGUIRRE, L. A. Selecting transients automatically
+        for the identification of models for an oil well. IFAC-PapersOnLine,
+        v. 48, n. 6, p. 154–158, 2015.
     """
 
     def __init__(

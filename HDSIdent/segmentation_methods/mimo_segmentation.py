@@ -11,36 +11,6 @@ class MIMOSegmentation(object):
     for a given model structure and based on the initial
     intervals provided.
 
-    This implementation is based on the methods proposed in:
-
-    PERETZKI, D. et al. Data mining of historic data for process identification.
-    In: Proceedings of the 2011 AIChE Annual Meeting, p. 1027–1033, 2011.
-
-    SHARDT, Y. A. W.; SHAH, S. L. Segmentation Methods for Model Identification from
-    Historical Process Data. In: Proceedings of the 19th World Congress.
-    Cape Town, South Africa: IFAC, 2014. p. 2836–2841.
-
-    BITTENCOURT, A. C. et al. An algorithm for finding process identification
-    intervals from normal operating data. Processes, v. 3, p. 357–383, 2015.
-
-    RIBEIRO, A. H.; AGUIRRE, L. A. Selecting transients automatically
-    for the identification of models for an oil well. IFAC-PapersOnLine,
-    v. 48, n. 6, p. 154–158, 2015.
-
-    PATEL, A. Data Mining of Process Data in Mutlivariable Systems.
-    Degree project in electrical engineering — Royal Institute of Technology,
-    Stockholm, Sweden, 2016.
-
-    ARENGAS, D.; KROLL, A. A Search Method for Selecting Informative Data in Predominantly
-    Stationary Historical Records for Multivariable System Identification.
-    In: Proceedings of the 21st International Conference on System Theory,
-    Control and Computing (ICSTCC). Sinaia, Romenia: IEEE, 2017a. p. 100–105.
-
-    ARENGAS, D.; KROLL, A. Searching for informative intervals in predominantly stationary
-    data records to support system identification. In: Proceedings of the XXVI International
-    Conference on Information, Communication and Automation Technologies (ICAT). Sarajevo,
-    Bosnia-Herzegovina: IEEE, 2017b.
-
     Arguments:
         model_structure: a model structure object defined by the ModelStructure class.
 
@@ -74,6 +44,36 @@ class MIMOSegmentation(object):
         n_jobs: the number of CPUs to use
         verbose: the degree of verbosity (from 0 to 10)
 
+    -------------------------------------------- REFERENCES --------------------------------------------
+    This segmentation method was created based on the following references:
+
+        PERETZKI, D. et al. Data mining of historic data for process identification.
+        In: Proceedings of the 2011 AIChE Annual Meeting, p. 1027–1033, 2011.
+
+        SHARDT, Y. A. W.; SHAH, S. L. Segmentation Methods for Model Identification from
+        Historical Process Data. In: Proceedings of the 19th World Congress.
+        Cape Town, South Africa: IFAC, 2014. p. 2836–2841.
+
+        BITTENCOURT, A. C. et al. An algorithm for finding process identification
+        intervals from normal operating data. Processes, v. 3, p. 357–383, 2015.
+
+        RIBEIRO, A. H.; AGUIRRE, L. A. Selecting transients automatically
+        for the identification of models for an oil well. IFAC-PapersOnLine,
+        v. 48, n. 6, p. 154–158, 2015.
+
+        PATEL, A. Data Mining of Process Data in Mutlivariable Systems.
+        Degree project in electrical engineering — Royal Institute of Technology,
+        Stockholm, Sweden, 2016.
+
+        ARENGAS, D.; KROLL, A. A Search Method for Selecting Informative Data in Predominantly
+        Stationary Historical Records for Multivariable System Identification.
+        In: Proceedings of the 21st International Conference on System Theory,
+        Control and Computing (ICSTCC). Sinaia, Romenia: IEEE, 2017a. p. 100–105.
+
+        ARENGAS, D.; KROLL, A. Searching for informative intervals in predominantly stationary
+        data records to support system identification. In: Proceedings of the XXVI International
+        Conference on Information, Communication and Automation Technologies (ICAT). Sarajevo,
+        Bosnia-Herzegovina: IEEE, 2017b.
     """
 
     def __init__(

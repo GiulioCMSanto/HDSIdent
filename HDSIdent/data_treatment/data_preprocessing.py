@@ -24,7 +24,10 @@ class Preprocessing(object):
         N: Butterworth filter order;
         Ts: the sampling frequency of the digital filter (Default = 1.0 seconds)/
 
-    Reference works:
+    --------------------------------- REFERENCES --------------------------------------
+
+    The preprocessing methods adopted were based on the following references:
+
         PERETZKI, D. et al. Data mining of historic data for process identification.
         In: Proceedings of the 2011 AIChE Annual Meeting, p. 1027–1033, 2011.
 

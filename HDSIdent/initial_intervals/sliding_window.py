@@ -5,7 +5,25 @@ from collections import defaultdict
 
 class SlidingWindow(object):
     """
-    This method is implemented based on the following works:
+    This method implements a sliding-window algorithm to detecting
+    changing positions based on window variance.
+
+    Arguments:
+        window_size: the sliding window size;
+        H_v: the variance threshold to consider a changing position;
+        min_input_coupling: the minimum number of inputs that must satisfy the method criteria;
+        min_output_coupling: the minimum number of outputs that must satisfy the method criteria;
+        num_previous_indexes: number of indexes to anticipate the beginning of an interval;
+        min_interval_length: the minimum length an interval must have;
+        n_jobs: the number of threads as in joblib library;
+        verbose: the degree of verbosity (going from 0 to 10).
+
+    ----------------------------- REFERENCES -------------------------------
+    This method was implemented inspired by the following works:
+
+        SMITH, S. W. Digital Signal Processing. San Diego, California:
+        California Technical Publishing, 1999.
+
         ARENGAS, D.; KROLL, A. A Search Method for Selecting
         Informative Data in Predominantly Stationary Historical
         Records for Multivariable System Identification.

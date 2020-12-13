@@ -39,6 +39,9 @@ HDSIdent implements aspects of the methods described and proposed in the followi
 PETTITT, A.N., 1979. A non-parametric approach to the
 change-point problem. Appl. Stat. 28, 126–135.
 
+SMITH, S. W. Digital Signal Processing. San Diego, California:
+California Technical Publishing, 1999.
+
 PERETZKI, D. et al. Data mining of historic data for process identification.
 In: Proceedings of the 2011 AIChE Annual Meeting, p. 1027–1033, 2011.
 
