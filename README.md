@@ -1,8 +1,13 @@
 # HDSIdent: Historical Data Segmentation for System Identification
 
-This library was created as part of my Master's degree dissertation and it can be used to identify intervals suitable for System Identification scanning historical datasets of industrial processess.
+This library can be used to identify intervals suitable for System Identification scanning historical datasets of industrial processess.
 
-**Dissertation work**: [Not yet published]
+**How to reference this work**:
+```
+SANTO, G. C. M. Data Mining Techniques Applied to Historical Data of Industrial Processes as a Tool to Find Time Intervals Suitable for System Identification. Dissertação (Mestrado) – Escola Politécnica da Universidade de São Paulo, São Paulo, Brasil, 2020.
+```
+
+Please see the Reference section to verify the related works.
 
 ### Licensing
 This library is licensed under the [MIT license](https://github.com/GiulioCMSanto/HDSIdent/blob/master/LICENSE).
