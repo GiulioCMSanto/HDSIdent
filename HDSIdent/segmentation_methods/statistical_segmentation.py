@@ -9,18 +9,7 @@ import numpy as np
 class MIMOStatistical(object):
     """
     This class performs a multivariable signal segmentation
-    for System Identification. The statistical method implemented
-    in this class was proposed in the following reference:
-
-    WANG, J. et al. Searching historical data segments for process
-    identification in feedback control loops. Computers and Chemical
-    Engineering, v. 112, n. 6, p. 6–16, 2018.
-
-    The multivariable extrapolation was inspired in the following work:
-
-    PATEL, A. Data Mining of Process Data in Mutlivariable Systems.
-    Degree project in electrical engineering — Royal Institute of Technology,
-    Stockholm, Sweden, 2016.
+    for System Identification.
 
     The following steps are performed by this class:
 
@@ -54,6 +43,18 @@ class MIMOStatistical(object):
         verbose: the degree of verbosity from 0 to 10, being 0 the absence of verbose.
         n_jobs: the number of CPU's to be used.
 
+    -------------------------------------------- REFERENCES --------------------------------------------
+    The statistical method implemented in this class was proposed in the following reference:
+
+        WANG, J. et al. Searching historical data segments for process
+        identification in feedback control loops. Computers and Chemical
+        Engineering, v. 112, n. 6, p. 6–16, 2018.
+
+    The multivariable extrapolation was inspired in the following work:
+
+        PATEL, A. Data Mining of Process Data in Mutlivariable Systems.
+        Degree project in electrical engineering — Royal Institute of Technology,
+        Stockholm, Sweden, 2016.
     """
 
     def __init__(

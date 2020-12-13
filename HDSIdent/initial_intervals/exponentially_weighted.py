@@ -12,29 +12,33 @@ sns.set_style("darkgrid")
 
 class ExponentiallyWeighted(object):
     """
-    Exponential Moving Average Control Chart. Performs a
-    recursive moving average filter and detects
-    change points and its corresponding intervals.
+    Exponentially Weighted Moving Average Control Chart.
+    Implements a recursive moving average filter, detecting
+    change-points and its corresponding intervals.
 
     Arguments:
-        X: the input discrete-time data
-        forgetting_fact_v: exponential forgetting factor for the variance
-        forgetting_fact_u: exponential forgetting factor for the average
-        sigma: data (population) standard deviation
-        H_u: change-point threshold for the mean
-        H_v: change-point threshold for the variance
-        normalize: whether or not to normalized the data (StandardScaler)
-        verbose: verbose level as in joblib library
-        n_jobs: the number of threads as in joblib library
+        forgetting_fact_v: exponential forgetting factor for the variance;
+        forgetting_fact_u: exponential forgetting factor for the average;
+        sigma: data (population) standard deviation. Estimated if not provided;
+        H_u: change-point threshold for the mean;
+        H_v: change-point threshold for the variance;
+        min_input_coupling: the min number of inputs that must satisfy the method criteria (thresholds);
+        min_output_coupling: the min number of outputs that must satisfy the method criteria (thresholds);
+        num_previous_indexes: number of indexes to anticipate the beginning of an interval;
+        split_size: the maximum interval length (lengthier intervals are split);
+        min_interval_length: the minimum length an interval must have;
+        n_jobs: the number of threads as in joblib library;
+        verbose: the degree of verbosity (going from 0 to 10).
 
-    This method is proposed in the following works:
+    -------------------------------- REFERENCES --------------------------------------
+    This method here implemented is proposed in the following works:
         PERETZKI, D. et al. Data mining of historic data for process identification.
         In: Proceedings of the 2011 AIChE Annual Meeting, p. 1027–1033, 2011.
 
         BITTENCOURT, A. C. et al. An algorithm for finding process identification
         intervals from normal operating data. Processes, v. 3, p. 357–383, 2015.
 
-    Ideas of the following work are also considered:
+    Ideas of the following work were also considered:
         WANG, J. et al. Searching historical data segments for process
         identification in feedback control loops. Computers and Chemical
         Engineering, v. 112, n. 6, p. 6–16, 2018.

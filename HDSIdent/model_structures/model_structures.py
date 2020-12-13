@@ -10,9 +10,18 @@ class ModelStructure(object):
     This class contains general functions that can be
     used for a variety of model structures used in
     System Identification. This class is used as a
-    father class for model structure classes.
+    father class for model structure classes, where
+    several are available, such as:
 
-    Reference works:
+    - QR decomposition
+    - Condition Number
+    - Effective Rank
+    - Scalar Cross-correlation
+    - Granger causality test (chi-squared test)
+
+    -------------------------------------------- REFERENCES --------------------------------------------
+    The theory behind this implementation was based in the following reference:
+
         PERETZKI, D. et al. Data mining of historic data for process identification.
         In: Proceedings of the 2011 AIChE Annual Meeting, p. 1027–1033, 2011.
 

@@ -24,7 +24,9 @@ class PettittMethod(object):
         n_jobs: the number of CPUs to use;
         verbose: the degree of verbosity (going from 0 to 10).
 
+    ----------------------------- REFERENCES -------------------------------
     This method is proposed in the following works:
+
        Pettitt, A.N., 1979. A non-parametric approach to the
        change-point problem. Appl. Stat. 28, 126–135.
 

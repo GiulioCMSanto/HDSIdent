@@ -20,20 +20,20 @@ class BandpassFilter(object):
         sigma: data (population) standard deviation;
         H: change-point threshold;
         min_input_coupling: the minimum number of inputs that must satisfy the method criteria;
-        min_output_coupling: the minimum number of outputs that must satisfy the method criteria.
-        An output is only approved if the min_input_coupling is satisfied;
-        num_previous_indexes: number of indexes included at the beginning of each obtained interval.
-        min_interval_length: the minimum length an interval must have. If an interval is larger than
-        this value, it will be further divided.
-        n_jobs: the number of CPUs to use;
+        min_output_coupling: the minimum number of outputs that must satisfy the method criteria;
+        num_previous_indexes: number of indexes to anticipate the beginning of an interval;
+        min_interval_length: the minimum length an interval must have;
+        n_jobs: the number of threads as in joblib library;
         verbose: the degree of verbosity (going from 0 to 10).
 
-    This method is proposed in the following work:
+    ------------------------------------------ REFERENCES ---------------------------------------------
+    The segmentation method here implemented is proposed in the following work:
+
         PATEL, A. Data Mining of Process Data in Mutlivariable Systems.
         Degree project in electrical engineering — Royal Institute of Technology,
         Stockholm, Sweden, 2016.
 
-    Ideas of the following work are also considered:
+    Ideas of the following work were also considered:
         WANG, J. et al. Searching historical data segments for process
         identification in feedback control loops. Computers and Chemical
         Engineering, v. 112, n. 6, p. 6–16, 2018.

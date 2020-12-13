@@ -7,21 +7,8 @@ import numpy as np
 
 class LaguerreStructure(ModelStructure):
     """
-    This class implements the Laguerre Filter Structure. The
-    Laguerre Filter structure is defined as in the following
-    references:
-
-    PERETZKI, D. et al. Data mining of historic data for process identification.
-    In: Proceedings of the 2011 AIChE Annual Meeting, p. 1027–1033, 2011.
-
-    BITTENCOURT, A. C. et al. An algorithm for finding process identification intervals
-    from normal operating data. Processes, v. 3, p. 357–383, 2015.
-
-    WAHLBERG, B. System identification using laguerre models. IEEE Transactions on
-    Automatic Control, IEEE, v. 36, n. 5, p. 551–562, 1991.
-
-    Belonging to the ModelStructure class, the LaguerreStructure
-    is able to compute the following metrics:
+    This class implements the Laguerre Filter Structure. Belonging to the ModelStructure class,
+    the LaguerreStructure is able to compute the following metrics:
 
     1) Compute a Leguerre Regressor Matrix
     2) Compute Effective Rank of types 1 and 2
@@ -41,6 +28,18 @@ class LaguerreStructure(ModelStructure):
         Ts: the Laguerre Filter sampling period
         n_jobs: the number of CPUs to use
         verbose: the degree of verbosity (from 0 to 10)
+
+    -------------------------------------------- REFERENCES --------------------------------------------
+    The Laguerre Filter structure is defined as in the following references:
+
+        PERETZKI, D. et al. Data mining of historic data for process identification.
+        In: Proceedings of the 2011 AIChE Annual Meeting, p. 1027–1033, 2011.
+
+        BITTENCOURT, A. C. et al. An algorithm for finding process identification intervals
+        from normal operating data. Processes, v. 3, p. 357–383, 2015.
+
+        WAHLBERG, B. System identification using laguerre models. IEEE Transactions on
+        Automatic Control, IEEE, v. 36, n. 5, p. 551–562, 1991.
     """
 
     def __init__(
