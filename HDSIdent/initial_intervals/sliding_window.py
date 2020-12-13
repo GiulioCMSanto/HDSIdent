@@ -5,7 +5,7 @@ from collections import defaultdict
 
 class SlidingWindow(object):
     """
-    Reference works:
+    This method is implemented based on the following works:
         ARENGAS, D.; KROLL, A. A Search Method for Selecting
         Informative Data in Predominantly Stationary Historical
         Records for Multivariable System Identification.
@@ -20,6 +20,7 @@ class SlidingWindow(object):
         Technologies (ICAT). Sarajevo, Bosnia-Herzegovina: IEEE,
         2017b. p. 132–137.
 
+    Ideas of the following work are also considered:
         WANG, J. et al. Searching historical data segments for process
         identification in feedback control loops. Computers and Chemical
         Engineering, v. 112, n. 6, p. 6–16, 2018.
