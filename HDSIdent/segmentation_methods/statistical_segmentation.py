@@ -11,7 +11,7 @@ class MIMOStatistical(object):
     This class performs a multivariable signal segmentation
     for System Identification.
 
-    The following steps are performed by this class:
+    The following steps are performed by this class (WANG et al., 2018):
 
     1) Initial segments are provided for analysis;
 
