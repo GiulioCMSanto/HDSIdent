@@ -82,6 +82,9 @@ Engineering, v. 112, n. 6, p. 6–16, 2018.
 The following works are also considered:
 
 ```
+FACELI, K. et al. Inteligência Artificial: Uma Abordagem de Aprendizado de
+Máquina. Rio de Janeiro, Brasil: LTC, 2017. (In portuguese)
+        
 AGUIRRE, L. A. Introdução à Identificação de Sistemas:
 técnicas lineares e não lineares: teoria e aplicação. 4. ed.
 Belo Horizonte, Brasil: Editora UFMG, 2015.
