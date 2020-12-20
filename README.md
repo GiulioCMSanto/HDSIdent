@@ -4,9 +4,11 @@ This library can be used to identify intervals suitable for System Identificatio
 
 **How to reference this work**:
 ```
-SANTO, G. C. M. Data Mining Techniques Applied to Historical Data of Industrial Processes
-as a Tool to Find Time Intervals Suitable for System Identification. Dissertação (Mestrado) – 
-Escola Politécnica da Universidade de São Paulo, São Paulo, Brasil, 2020.
+[SANTO, G. C. M. Data Mining Techniques Applied to Historical 
+Data of Industrial Processes as a Tool to Find Time Intervals 
+Suitable for System Identification. Masters dissertation – 
+Polytechnic School of the University of São Paulo, São Paulo, 
+Brasil, 2020. DOI: 10.13140/RG.2.2.13295.46240](https://www.researchgate.net/publication/347511108_Data_Mining_Techniques_Applied_to_Historical_Data_of_Industrial_Processes_as_a_Tool_to_Find_Time_Intervals_Suitable_for_System_Identification)
 ```
 
 Please see the **References** section to verify the related works.
@@ -40,14 +42,11 @@ There are two main ways of reproducing the provided notebooks:
 
 ### References
 
-HDSIdent implements aspects of the methods described and proposed in the following works:
+HDSIdent implements and unifies the methods proposed in the following works:
 
 ```
 PETTITT, A.N., 1979. A non-parametric approach to the
 change-point problem. Appl. Stat. 28, 126–135.
-
-SMITH, S. W. Digital Signal Processing. San Diego, California:
-California Technical Publishing, 1999.
 
 PERETZKI, D. et al. Data mining of historic data for process identification.
 In: Proceedings of the 2011 AIChE Annual Meeting, p. 1027–1033, 2011.
@@ -80,4 +79,15 @@ Bosnia-Herzegovina: IEEE, 2017b.
 WANG, J. et al. Searching historical data segments for process
 identification in feedback control loops. Computers and Chemical
 Engineering, v. 112, n. 6, p. 6–16, 2018.
+```
+
+The following works are also considered:
+
+```
+AGUIRRE, L. A. Introdução à Identificação de Sistemas:
+técnicas lineares e não lineares: teoria e aplicação. 4. ed.
+Belo Horizonte, Brasil: Editora UFMG, 2015.
+
+SMITH, S. W. Digital Signal Processing. San Diego, California:
+California Technical Publishing, 1999.
 ```
