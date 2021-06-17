@@ -7,12 +7,12 @@ This library can be used to identify intervals suitable for System Identificatio
 [SANTO, G. C. M. Data Mining Techniques Applied to Historical Data of Industrial Processes 
 as a Tool to Find Time Intervals Suitable for System Identification. Masters dissertation 
 – Polytechnic School of the University of São Paulo, São Paulo, Brasil, 2020. 
-DOI: 10.13140/RG.2.2.13295.46240](https://www.researchgate.net/publication/347511108_Data_Mining_Techniques_Applied_to_Historical_Data_of_Industrial_Processes_as_a_Tool_to_Find_Time_Intervals_Suitable_for_System_Identification?channel=doi&linkId=5fdf5293a6fdccdcb8e856c4&showFulltext=true)
+DOI: https://doi.org/10.11606/D.3.2020.tde-05032021-111034](https://www.teses.usp.br/teses/disponiveis/3/3139/tde-05032021-111034/pt-br.php)
 
 Please see the **References** section to verify the related works.
 
 ### Licensing
-This library is licensed under the [MIT license](https://github.com/GiulioCMSanto/HDSIdent/blob/master/LICENSE).
+This library is licensed under the [MIT license](https://www.teses.usp.br/teses/disponiveis/3/3139/tde-05032021-111034/en.php).
 
 ### How to install the library
 ```pip3 install HDSIdent```
